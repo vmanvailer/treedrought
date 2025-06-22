@@ -1,14 +1,13 @@
 Package: treedrought
 Title: Calculated drought indices and models drought recovery.
-Version: 0.0.0.9000
+Version: 0.9.0.0000
 Authors@R: 
     person("Vinicius", "Manvailer", , "vmgoncal@ualberta.ca", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+           comment = c(ORCID = "0000-0001-6529-4474"))
+Description: Uses tree ring data and monthly climate data to identify ecologically defined drought events, calculate resilience indices and model a standardized recovery capacity of trees/sites.
 Depends: data.table,
          SPEI
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+License: None
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
