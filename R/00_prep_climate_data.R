@@ -14,10 +14,10 @@
 #' @importFrom SPEI spei thornthwaite
 #' @export
 calc_clim_drought_period <- function(clim_data,
-                                     spei_scale = 1,
-                                     rescale_spei = TRUE,
+                                     growth_period = 12,
                                      growth_end = c(NH = 8, SH = 2),
-                                     growth_period = 12
+                                     spei_scale = 1,
+                                     rescale_spei = TRUE
 ) {
   library(data.table)
   library(SPEI)
@@ -40,12 +40,13 @@ calc_clim_drought_period <- function(clim_data,
                                      Year + fifelse(Month > growth_end["NH"], 1, 0),
                                      Year + fifelse(Month > growth_end["SH"], 1, 0) -1)]
 
-  message("Removing drought years with less than 12 months of data.")
-  # Remove data that does not have 12 months of records
-  climate_data <- climate_data[, if (.N == 12) .SD, by = .(Id, DroughtYear)]
+  message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Disabling year filter that keeps only the ones w/ 12 mo of data : : : : =-=-=-=-=-=-=-=-=-")
+  # message("Removing drought years with less than 12 months of data.")
+  # # Remove data that does not have 12 months of records
+  # climate_data <- climate_data[, if (.N == 12) .SD, by = .(Id, DroughtYear)]
 
-  message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Filtering climate data to >= 1970 before SPEI calculation : : : : =-=-=-=-=-=-=-=-=-")
-  climate_data <- climate_data[DroughtYear >= 1970,]
+  message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Filtering climate data to >= 1970 and <= 2017 before SPEI calculation : : : : =-=-=-=-=-=-=-=-=-")
+  climate_data <- climate_data[DroughtYear >= 1970 & DroughtYear <= 2017,]
   # Compute PET and water balance
   message("Computing PET and Water balance (Precipitation - PET)")
   climate_data[, PET := SPEI::thornthwaite(TAve, unique(.SD$Lat), verbose = FALSE), by = Id]

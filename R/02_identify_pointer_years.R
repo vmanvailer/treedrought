@@ -40,7 +40,7 @@ identify_drought_events <- function(chron_clim_data,
   threshold_lag1 <- -1
   threshold_lag2 <- -1.5
   message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Using -2 SD tree ring growth threshold for for delayed response. : : : : =-=-=-=-=-=-=-=-=-")
-  # Arbitrary non-standard, non-logical  number used for growth. Remove later
+  # Arbitrary non-standard, non-logical number used for growth. Remove later
   threshold_lag2_grw <- -2
 
 
@@ -62,6 +62,7 @@ identify_drought_events <- function(chron_clim_data,
 # If higher than the threshold then we flag as a group drought.
 identify_drought_years <- function(data_with_drought_events,
                                    group_col = NULL,
+                                   n_years_recovery = 2,
                                    thr_pointer_year_prop_sites = 0.3,
                                    thr_multi_drought_tiebreak = 0.65) {
   # Ensure data.table format
@@ -134,7 +135,7 @@ identify_drought_years <- function(data_with_drought_events,
   no_rec_data <- drought_years[NoRecovery == FALSE, ..cols]
   drought_years <- drought_years[!no_rec_data, on = cols] # Keep only droughts that have recovery period.
 
-  message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Removing drought years from 2003+. Excluded 2003 specifically by mistake : : : : =-=-=-=-=-=-=-=-=-")
+  message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Removing drought years from 2003+. Excluded 2003 specifically by mistake ref qaqc-04: : : : =-=-=-=-=-=-=-=-=-")
   drought_years <- drought_years[Year < 2003]
 
   # Remove drought years that have less than three records

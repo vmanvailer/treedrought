@@ -48,5 +48,6 @@ merge_climate_growth_data <- function(chron_data, clim_drought_period) {
   message(sprintf("  Number of Ids with missing chronology data: %d\n", n_ids_missing_chron))
 
   # Return the merged data and the missing data report
-  return(list(data_with_calculated_drought_metrics = merged_data, missing_report = if(nrow(missing_report) == 0) "All 'Ids' and 'Years' match between climate data and chronology data." else missing_report))
+  return(list(data_with_calculated_drought_metrics = merged_data,
+              missing_report = if(nrow(missing_report) == 0) "All 'Ids' and 'Years' match between climate data and chronology data." else missing_report))
 }

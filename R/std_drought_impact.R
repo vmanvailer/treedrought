@@ -103,6 +103,7 @@ std_drought_impact <- function(
   message("Defining drought years across 'chron_group_col'.")
   data_with_drought_years <- identify_drought_years(data_with_drought_events,
                                                     chron_group_col,
+                                                    n_years_recovery,
                                                     thr_pointer_year_prop_sites,
                                                     thr_multi_drought_tiebreak)
 

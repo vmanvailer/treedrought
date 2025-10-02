@@ -1,6 +1,6 @@
 load_thesis_data <- function(tree_ring_data_source = c("Detrended", "Detrended imputed")){
   library(data.table)
-  path_data_root_copy <- "G:/My Drive/1_Project & Courses/2_Project/2_Chapter 4 - Drought analysis"
+  path_data_root_copy <- "H:/My Drive/Work/1_PhD/2_Chapter 4 - Drought analysis"
   # --- Climate -------------------------------------
   path_climate_udel_copy <- file.path(path_data_root_copy, "03. Filtering climate data", "03. UDEL_filter4.Rds")
   path_chron_metadata_copy <- file.path(path_data_root_copy, "00. Base files", "Tree Rings", "3_Metadata_for_raw_and_chronology_data_files.csv")
@@ -17,7 +17,7 @@ load_thesis_data <- function(tree_ring_data_source = c("Detrended", "Detrended i
   if(length(tree_ring_data_source) != 1){
       stop("Pick which tree ring data to start with. 'Dentrended' or 'Detrended imputed'.")
   }
-  if(tree_ring_data_source == "Detrended imputed"){
+  if(tolower(tree_ring_data_source) == "detrended imputed"){
     message("Reading imputed tree ring dataset from CSV file.")
     path_chron_itrdb_copy <- file.path(path_data_root_copy, "02. Imputing chronologies ends", "02. crn_filter_imputed.csv")
     chron_itrdb_csv <- fread(path_chron_itrdb_copy)
