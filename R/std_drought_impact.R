@@ -110,7 +110,10 @@ std_drought_impact <- function(
   # <MANUAL THESIS STEPS> <START>
   # 1 - Removal of drought events from visually inspecting them.
   message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Removing inconsistent droughts from visual inspections : : : : =-=-=-=-=-=-=-=-=-")
-  path_data_root <- "G:/My Drive/1_Project & Courses/2_Project/2_Chapter 4 - Drought analysis/"
+  path_data_root <- "H:/My Drive/Work/1_PhD/2_Chapter 4 - Drought analysis/"
+  if (!dir.exists(path_data_root)){
+    stop(paste0("Directory below does not exist:\n\t", path_data_root))
+  }
   drght_list <- fread(paste0(path_data_root, "10.c. Visualizing drought coherence/10.c. drght_list.csv"),
                       select = c("ADMIN_GROUPING", "CLUSTER", "YEAR", "KEEP_VISUAL_INSPECTION"))
   drght_list[,group_col := paste0(ADMIN_GROUPING, "_", CLUSTER)]
@@ -152,8 +155,7 @@ std_drought_impact <- function(
   recovery <- list(intermediate_steps = list(
                                  input_data = list(chron_data = chron_data,
                                                    clim_data = clim_data),
-                                 params = list(chron_data_imput = chron_data_imput,
-                                               chron_group_col = chron_group_col,
+                                 params = list(chron_group_col = chron_group_col,
                                                clim_growth_end = clim_growth_end,
                                                clim_growth_period = clim_growth_period,
                                                clim_spei_scale = clim_spei_scale,
