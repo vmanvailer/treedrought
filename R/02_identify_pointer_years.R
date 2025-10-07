@@ -135,10 +135,7 @@ identify_drought_years <- function(data_with_drought_events,
   no_rec_data <- drought_years[NoRecovery == FALSE, ..cols]
   drought_years <- drought_years[!no_rec_data, on = cols] # Keep only droughts that have recovery period.
 
-  message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Removing drought years from 2003+. Excluded 2003 specifically by mistake ref qaqc-04: : : : =-=-=-=-=-=-=-=-=-")
-  drought_years <- drought_years[Year < 2003]
-
-  # Remove drought years that have less than three records
+    # Remove drought years that have less than three records
   # In order to fit a negative exponential model, must have at least three records
   message("-=-=-=-=-=-=-=-= : : : : TEMPORARYLY DEACTIVATED STEP: To allow QAQC of drought events moving forward. : : : : =-=-=-=-=-=-=-=-=-")
   # drought_years <- drought_years[, .SD[.N >= 3] , by = c(get(group_col))]

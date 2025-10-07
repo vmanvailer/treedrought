@@ -3,3 +3,5 @@
 ^development$
 ^nfitoosm\.Rproj$
 ^tests$
+^qaqc(/.*)?$
+^_targets\

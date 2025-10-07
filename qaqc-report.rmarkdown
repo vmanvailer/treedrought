@@ -1,0 +1,92 @@
+---
+title: "QAQC Comparison Report"
+format: html
+execute:
+  echo: true
+---
+
+## QAQC
+
+```{r setup}
+library(targets)
+library(data.table)
+library(ggplot2)
+source("qaqc/comparison_functions.R")
+tar_load(qaqc_summary)
+```
+
+### Climate data preparation
+
+First steps involve preparing climate data to derive a moisture index.
+  (Step 1) Shift calendar year months to better align with growth period.
+    Northern hemisphere 1971 year starts in September 1970 and ends in August of 1971 
+    Southern hemisphere 1971 year starts in March 1971 and ends in Februrary 1972
+  (Step 2) Calculate monthly:
+    a. Potential Evapotranpiration (PET),
+    b. Water Balance (BAL), and
+    c. Standardized Preciptation-Evapotranspiration Index (SPEI)
+  (Step 3) Aggregate monthly climate to yearly to match tree ring temporal resolution.
+
+```{r}
+res1 <- plot_compare(qaqc_summary$climate_prep$step1)
+res1$stats
+
+res1$plots
+
+res2 <- plot_compare(qaqc_summary$climate_prep$step2)
+res2$stats
+
+res2$plots
+
+res3 <- plot_compare(qaqc_summary$climate_prep$step3)
+res3$stats
+
+res3$plots
+
+```
+
+### Merge climate and growth
+Climate and Growth Ring data are then merged together.
+```{r}
+qaqc_summary$merge
+```
+
+### Flag drought ***events***
+Drought events are calculated for each individual Id (Site).
+```{r}
+qaqc_summary$drought_flags
+```
+
+### Flag drought ***years***
+Drought events are summarized into common drought years for the region.
+```{r}
+qaqc_summary$drought_years 
+``` 
+
+### Expand dataset 
+Dataset is expanded to make sure every drought year of every site can have growth 
+data aggregated into average pre-drought growth (2 years) and average pos-drought growth (2 years)
+```{r}
+```
+
+### Calculate RRR 
+Resistance, Recovery and Resilience indices are calculated based on drought years for each site.
+```{r}
+```
+
+### Model RRR 
+Resilience is modeled using negative exponential function.
+```{r}
+```
+
+### Calculate RED50 
+Resilience at 50% resistance (RED50) is predicted for each site
+```{r}
+```
+
+### Summarise RED50 
+RED50 is aggregated to group level.
+```{r}
+```
+---
+

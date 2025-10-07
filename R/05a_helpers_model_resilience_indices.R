@@ -31,16 +31,44 @@ helper_nls_fit_recovery_model <- function(data) {
 #' @param data The original dataset used to fit the model.
 #' @return A bootstrapped `nlsBoot` object or NA if error.
 #' @export
-helper_nls_bootstrap_nls_model <- function(model, data, id) {
+helper_nls_bootstrap_nls_model <- function(model_successful, model, data, id, idx, total, start_time) {
   tryCatch({
+    start_file <- Sys.time()
+
+    # Handle unsuccessful models early
+    if (!model_successful) {
+      msg <- "Base nls model not completed successfully. Can't bootstrap this record. Check column 'FitErrorMsg' for more details."
+      message(sprintf("%s\tFAIL\tSkipping (%d/%d): %s\n\t%s",
+                      format(start_file, "%Y-%m-%d %H:%M:%S"), idx, total, id, msg))
+      return(msg)
+      }
+
+    # Run the bootstrap
     model$data <- data
     boot <- nlstools::nlsBoot(model)
     model$data <- "data"
     boot$nls$data <- "data"
-    print(paste0("Finished bootstrapping: ", id))
+
+    # Timing info
+    end_file <- Sys.time()
+    file_time <- as.numeric(difftime(end_file, start_file, units = "secs"))
+    total_time <- as.numeric(difftime(end_file, start_time, units = "secs"))
+
+    # Nicely formatted durations
+    fmt_time <- function(x) if (x < 60) sprintf("%.1f secs", x) else sprintf("%.1f mins", x/60)
+    fmt_total <- function(x) if (x < 3600) sprintf("%.1f mins", x/60) else sprintf("%.1f hours", x/3600)
+
+    # Message
+    message(sprintf("%s\tINFO\t(%d/%d) Finished bootstrapping: %s (in %s) | Total time: %s\n",
+                    format(start_file, "%Y-%m-%d %H:%M:%S"),
+                    idx, total, id,
+                    fmt_time(file_time),
+                    fmt_total(total_time)))
+
     return(boot)
   }, error = function(e) {
-    return(NA)
+    message(sprintf("ERROR\t(%d/%d)\t%s: %s\n", idx, total, id, e$message))
+    return(e$message)
   })
 }
 
@@ -52,8 +80,13 @@ helper_nls_bootstrap_nls_model <- function(model, data, id) {
 #' @param data    A data.table with a numeric column `Resistance`.
 #' @return A data.table with Resistance, median_ci, lwr_ci, upr_ci, fit_sp_ci, and full_res.
 #' @export
-helper_nls_predict_ci_band <- function(nls_boot, model, data, modeled_successful, id) {
-  if (!modeled_successful) return(NA)
+helper_nls_predict_ci_band <- function(model_successful, model, nls_boot, data, id, idx, total, start_time) {
+  start_file <- Sys.time()
+  if (!model_successful) {
+    message(sprintf("%s\tFAIL\tSkipping (%d/%d): %s",
+                    format(start_file, "%Y-%m-%d %H:%M:%S"), idx, total, id))
+    return(NA)
+  }
 
   # Derive a 100-point resistance range from the data
   resist_range <- seq(
@@ -79,7 +112,22 @@ helper_nls_predict_ci_band <- function(nls_boot, model, data, modeled_successful
     FitCI      = predict(model, newdata),
     FullRes    = helper_nls_full_res(resist_range)
   )
-  print(paste0("Finished calculating CI for: ", id))
+
+  # Timing info
+  end_file <- Sys.time()
+  file_time <- as.numeric(difftime(end_file, start_file, units = "secs"))
+  total_time <- as.numeric(difftime(end_file, start_time, units = "secs"))
+
+  # Nicely formatted durations
+  fmt_time <- function(x) if (x < 60) sprintf("%.1f secs", x) else sprintf("%.1f mins", x/60)
+  fmt_total <- function(x) if (x < 3600) sprintf("%.1f mins", x/60) else sprintf("%.1f hours", x/3600)
+
+  # Message
+  message(sprintf("%s\tINFO\t(%d/%d) Finished calculating CI for: %s (in %s) | Total time: %s\n",
+                  format(start_file, "%Y-%m-%d %H:%M:%S"),
+                  idx, total, id,
+                  fmt_time(file_time),
+                  fmt_total(total_time)))
 
   return(out)
 }
@@ -89,8 +137,8 @@ helper_nls_predict_ci_band <- function(nls_boot, model, data, modeled_successful
 #' @param ci_data A data.table with CI bands and full resilience values.
 #' @return A list with intersection types and threshold Resistance values.
 #' @export
-helper_nls_compute_intersections <- function(ci_data, modeled_successful) {
-  if (!modeled_successful) return(NA)
+helper_nls_compute_intersections <- function(ci_data, model_successful) {
+  if (!model_successful) return(NA)
 
   upr_diff <- ci_data$FullRes - ci_data$UpperCI
   lwr_diff <- ci_data$FullRes - ci_data$LowerCI
@@ -227,7 +275,7 @@ helper_nls_range_limits <- function(data, upr_cross_type, upr_intsct_thr, lwr_cr
     } else if (!is.na(upr_cross_type) & upr_cross_type == "over_rec") {
       limits$over_rec_lower_limit <- min_resist
       limits$over_rec_upper_limit <- max_resist
-    } else {NA}
+    } else {NULL}
   }
 
   return(limits)
