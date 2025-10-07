@@ -107,27 +107,6 @@ std_drought_impact <- function(
                                                     thr_pointer_year_prop_sites,
                                                     thr_multi_drought_tiebreak)
 
-  # <MANUAL THESIS STEPS> <START>
-  # 1 - Removal of drought events from visually inspecting them.
-  message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Removing inconsistent droughts from visual inspections : : : : =-=-=-=-=-=-=-=-=-")
-  path_data_root <- "H:/My Drive/Work/1_PhD/2_Chapter 4 - Drought analysis/"
-  if (!dir.exists(path_data_root)){
-    stop(paste0("Directory below does not exist:\n\t", path_data_root))
-  }
-  drght_list <- fread(paste0(path_data_root, "10.c. Visualizing drought coherence/10.c. drght_list.csv"),
-                      select = c("ADMIN_GROUPING", "CLUSTER", "YEAR", "KEEP_VISUAL_INSPECTION"))
-  drght_list[,group_col := paste0(ADMIN_GROUPING, "_", CLUSTER)]
-  drght_list[, `:=` (ADMIN_GROUPING = NULL,
-                     CLUSTER = NULL)]
-  data_with_drought_years <- merge(data_with_drought_years, drght_list, by.x = c("group_col", "Year"), by.y = c("group_col", "YEAR"), all.x = TRUE)
-  # Quick check to make sure all was included
-  data_with_drought_years$KEEP_VISUAL_INSPECTION |> is.na() |> sum()
-  data_with_drought_years[is.na(KEEP_VISUAL_INSPECTION)]
-  # Great only the unclassified groups
-  data_with_drought_years <- data_with_drought_years[KEEP_VISUAL_INSPECTION == TRUE]
-  data_with_drought_years # Should have 188 droughts and match "d" line #37 of script 11. Preparing expanded...
-  # <MANUAL THESIS STEPS> <END>
-
   # Step 6: Prepare expanded dataset for resilience index calculation
   # Future improvement: are different drought components allowed to overlap? e.g. can a post drought period overlap with a pre-drought period?
   message("Preparing data for resilience index calculations.")
@@ -148,7 +127,6 @@ std_drought_impact <- function(
                                                      chron_group_col,
                                                      model_min_n_drought_events,
                                                      model_resistance_val)
-
 
   # Wrap all up.
   predicted_recovery <- drought_recovery_model[,.(group_col, Id, ProjGrowthReduction50Mean, ProjGrowthReduction50SE)]

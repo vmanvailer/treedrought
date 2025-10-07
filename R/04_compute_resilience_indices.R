@@ -7,11 +7,13 @@
 #' @param group_col Character vector with grouping columns (e.g., c("AdminGrouping", "Cluster", "SpeciesItrdbName", "AdmCluSpp")).
 #'
 #' @return A data.table with long-format RRR indices.
-calculate_resilience_indices <- function(data_with_drought_events_expanded, group_col) {
+calculate_resilience_indices <- function(data_with_drought_events_expanded, group_col = NULL) {
   setDT(data_with_drought_events_expanded)
 
   # Ensure grouping columns are character
-  data_with_drought_events_expanded[, (group_col) := lapply(.SD, as.character), .SDcols = group_col]
+  if(!is.null(group_col)){
+    data_with_drought_events_expanded[, (group_col) := lapply(.SD, as.character), .SDcols = get(group_col)]
+  }
 
   # Remove non-drought years from data for calculating Resistance, Recovery and Resilience.
   data_to_compute_rrr <- data_with_drought_events_expanded[!is.na(DroughtPeriod)]
@@ -34,17 +36,17 @@ calculate_resilience_indices <- function(data_with_drought_events_expanded, grou
     Resistance = Drought / PreDrought,
     Recovery = PosDrought / Drought,
     Resilience = PosDrought / PreDrought,
-    RelResilence = ((PosDrought - Drought) / (PreDrought - Drought)) * (1 - (Drought / PreDrought))
+    RelResilience = ((PosDrought - Drought) / (PreDrought - Drought)) * (1 - (Drought / PreDrought))
   )]
 
   # Melt to long format
   calculated_indices <- melt(wide_rwi,
                    id.vars = c(group_col, "Id", "DroughtPeriod", "RRRClass"),
-                   measure.vars = c("Resistance", "Recovery", "Resilience", "RelResilence"),
+                   measure.vars = c("Resistance", "Recovery", "Resilience", "RelResilience"),
                    variable.name = "Indices", value.name = "Value")
 
   # Set index order
-  calculated_indices[, Indices := factor(Indices, levels = c("Resistance", "Recovery", "Resilience", "RelResilence"))]
+  calculated_indices[, Indices := factor(Indices, levels = c("Resistance", "Recovery", "Resilience", "RelResilience"))]
 
   return(calculated_indices)
 }

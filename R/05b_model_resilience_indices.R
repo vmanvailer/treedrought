@@ -40,22 +40,102 @@ model_resilience_indices <- function(calculated_indices,
   message("Modeling recovery with nls2.")
   # Fit models
   nested[, ModeledRecoveryFit := lapply(data, helper_nls_fit_recovery_model)]
-  nested[, SuccessfullyModeled := sapply(ModeledRecoveryFit, function(x) !(is.character(x) && grepl("Error", x)))]
+  nested[, SuccessfullyModeled := sapply(ModeledRecoveryFit, function(x){
+    if (inherits(x, "nls")) {
+      TRUE
+    } else if (is.character(x) && grepl("Error", x)) {
+      FALSE
+    } else if (is.null(x) || is.na(x)) {
+      FALSE
+    } else {
+      FALSE
+      }
+  })]
+  nested[, FitErrorMsg := sapply(ModeledRecoveryFit, function(x) {
+    if (is.character(x)) x else NA_character_
+  })]
 
   message("Bootstrapping model for calculating confidence intervals.")
-  # Bootstrap (long run | ~2 min cluster level or 20+min for Id level)
-  nested[, ModeledRecoveryBootstrapped := Map(helper_nls_bootstrap_nls_model, ModeledRecoveryFit, data, Id)]
+  # # Bootstrap (long run | ~2 min cluster level or 20+min for Id level)
+  # if (parallel::detectCores() > 1) {
+  #   # Use parallel if possible
+  #   future::plan(future::multisession, workers = floor(0.8 * parallel::detectCores()))
+  # } else {
+  #   # Fallback to sequential
+  #   future::plan(future::sequential)
+  # }
+  #
+  # # time_started <- Sys.time()
+  # # Split Ids into chunks (1 chunk per worker)
+  # ids <- unique(nested$Id[1:60])
+  # chunks <- split(ids, cut(seq_along(ids), 8, labels = FALSE))
+  #
+  # # Each worker runs its whole chunk sequentially
+  # results <- future.apply::future_lapply(chunks, function(id_subset) {
+  #   out <- list()
+  #   for (id in id_subset) {
+  #     dat <- nested[Id == id]$data[[1]]
+  #     model <- nested[Id == id]$ModeledRecoveryFit[[1]]
+  #     boot <- helper_nls_bootstrap_nls_model(model, dat, id, start_time)
+  #     out[[id]] <- boot
+  #   }
+  #   out
+  # })
+  #
+  # # Combine results
+  # all_results <- do.call(c, results)
+
+  #
+  #
+  time_started <- Sys.time()
+  # nested <- nested[sample(1:nrow(nested), 60)][, ModeledRecoveryBootstrapped :=
+  total_ids <- nrow(nested)
+  nested <- nested[, ModeledRecoveryBootstrapped :=
+           Map(helper_nls_bootstrap_nls_model,
+               SuccessfullyModeled,
+               ModeledRecoveryFit,
+               data,
+               Id,
+               seq_len(total_ids),
+               MoreArgs = list(total = total_ids, start_time = time_started))]
 
   message("Calculating confidence intervals from bootstrapped results.")
   # Predict Confidence Interval band
   # To properly create a smooth CI band around fit must create
-  nested[, RecoveryCIFromBootstrapping := Map(helper_nls_predict_ci_band, ModeledRecoveryBootstrapped, ModeledRecoveryFit, data, SuccessfullyModeled, Id)]
+  time_started <- Sys.time()
+  nested[, RecoveryCIFromBootstrapping :=
+           Map(helper_nls_predict_ci_band,
+               SuccessfullyModeled,
+               ModeledRecoveryFit,
+               ModeledRecoveryBootstrapped,
+               data,
+               Id,
+               seq_len(total_ids),
+               MoreArgs = list(total = total_ids, start_time = time_started))]
 
   message("Calculating where CI bands intersect with full recovery model.")
   # Intersections
   nested[, FullModelIntersectsWithCIBands := Map(helper_nls_compute_intersections, RecoveryCIFromBootstrapping, SuccessfullyModeled)]
   nested[, c("upr_cross_type", "upr_intsct_thr", "lwr_cross_type", "lwr_intsct_thr", "med_intsct_thr") :=
-           transpose(lapply(FullModelIntersectsWithCIBands, function(x) x))]
+           transpose(mapply(function(x, ok) {
+             if (ok && is.list(x) && all(c("upr_cross_type", "upr_intsct_thr", "lwr_cross_type", "lwr_intsct_thr", "med_intsct_thr") %in% names(x))) {
+               list(
+                 upr_cross_type = x$upr_cross_type,
+                 upr_intsct_thr  = x$upr_intsct_thr,
+                 lwr_cross_type = x$lwr_cross_type,
+                 lwr_intsct_thr  = x$lwr_intsct_thr,
+                 med_intsct_thr  = x$med_intsct_thr
+               )
+             } else {
+               list(
+                 upr_cross_type = NA_character_,
+                 upr_intsct_thr  = NA_real_,
+                 lwr_cross_type = NA_character_,
+                 lwr_intsct_thr  = NA_real_,
+                 med_intsct_thr  = NA_real_
+               )
+             }
+           }, FullModelIntersectsWithCIBands, SuccessfullyModeled, SIMPLIFY = FALSE))]
 
   message("Calculating RSME.")
   # Calculate RMSE, model parameters, standard errors, and number of droughts
@@ -89,10 +169,14 @@ model_resilience_indices <- function(calculated_indices,
 
   message("Projecting growth impact for comparison.")
   # Estimate recovery at model_resistance_val and compute growth reduction metrics
-  nested[, Recovery50MDL := Map(function(boot, ok) {
-    if (!ok) return(NA)
+  nested[, Recovery50MDL := mapply(function(boot, ok) {
+    if (is.na(ok) || !ok) return(NA)
     thr <- model_resistance_val
     df <- as.data.table(boot$coefboot)
+    df[, `:=`(
+      b = as.numeric(b),
+      z = as.numeric(z)
+    )]
     df[, `:=`(
       Recovery50 = z * thr^b,
       FullRecovery50   = 1 / thr
@@ -104,13 +188,15 @@ model_resilience_indices <- function(calculated_indices,
 
   message(paste0("Calculating mean projected growth recovery at 0.5 Resistance for each combination of: ", paste(cols, collapse = ", ")))
   # Summarize ProjGrowthReduction50: mean and standard error
-  nested[, c("ProjGrowthReduction50Mean", "ProjGrowthReduction50SE") := transpose(lapply(Recovery50MDL, function(df) {
-    if (is.data.table(df)) {
-      c(mean(df$ProjGrowthReduction50, na.rm = TRUE), sd(df$ProjGrowthReduction50, na.rm = TRUE))
-    } else {
-      c(NA_real_, NA_real_)
-    }
-  }))]
+  nested[, c("ProjGrowthReduction50Mean", "ProjGrowthReduction50SE") :=
+           transpose(Map(function(df) {
+             if (is.data.table(df) && "ProjGrowthReduction50" %in% names(df)) {
+               c(mean(df$ProjGrowthReduction50, na.rm = TRUE),
+                 sd(df$ProjGrowthReduction50, na.rm = TRUE))
+             } else {
+               c(NA_real_, NA_real_)
+             }
+           }, Recovery50MDL))]
 
   return(nested)
 }
