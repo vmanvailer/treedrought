@@ -19,6 +19,10 @@ model_resilience_indices <- function(calculated_indices,
 
   calculated_indices_wide <- dcast(calculated_indices, Id + group_col + DroughtPeriod + RRRClass ~ Indices, value.var = "Value")
 
+  message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Removing droughts with recovery > 100 due to convergence issues. : : : : =-=-=-=-=-=-=-=-=-")
+  # from script 13. RRR nls - negative exponential modelling line #56.
+  calculated_indices_wide <- calculated_indices_wide[Recovery < 100]
+
   # Add full resilience fit and residuals for comparison
   calculated_indices_wide[, FullRecoveryFitted := helper_nls_full_res(Resistance)]
   calculated_indices_wide[, FullRecoveryResiduals := Recovery - FullRecoveryFitted]
@@ -53,7 +57,6 @@ model_resilience_indices <- function(calculated_indices,
 
   message("Bootstrapping model for calculating confidence intervals.")
   # # Bootstrap (long run | ~2 min cluster level or 20+min for Id level)
-  # Attempting to use Parallelism. Overhead may be too high and not worth it. yet.
   # if (parallel::detectCores() > 1) {
   #   # Use parallel if possible
   #   future::plan(future::multisession, workers = floor(0.8 * parallel::detectCores()))
@@ -85,19 +88,20 @@ model_resilience_indices <- function(calculated_indices,
   #
   #
   time_started <- Sys.time()
+  # nested <- nested[sample(1:nrow(nested), 60)][, ModeledRecoveryBootstrapped :=
   total_ids <- nrow(nested)
   nested <- nested[, ModeledRecoveryBootstrapped :=
-                     Map(helper_nls_bootstrap_nls_model,
-                         SuccessfullyModeled,
-                         ModeledRecoveryFit,
-                         data,
-                         Id,
-                         seq_len(total_ids),
-                         MoreArgs = list(total = total_ids, start_time = time_started))]
+           Map(helper_nls_bootstrap_nls_model,
+               SuccessfullyModeled,
+               ModeledRecoveryFit,
+               data,
+               Id,
+               seq_len(total_ids),
+               MoreArgs = list(total = total_ids, start_time = time_started))]
 
   message("Calculating confidence intervals from bootstrapped results.")
   # Predict Confidence Interval band
-  # To properly create a smooth CI band around fit must create it.
+  # To properly create a smooth CI band around fit must create
   time_started <- Sys.time()
   nested[, RecoveryCIFromBootstrapping :=
            Map(helper_nls_predict_ci_band,

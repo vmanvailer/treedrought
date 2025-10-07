@@ -22,7 +22,7 @@ identify_drought_events <- function(chron_clim_data,
     data_with_drought_events[, SPEIToUse := MeanSPEI]
   }
 
-  message("-=-=-=-=-=-=-=-= : : : : IN DEVELOPMENT: Future version will allow user to select whether to use RWI or RES. Currently only using RES : : : : =-=-=-=-=-=-=-=-=-")
+  message("-=-=-=-=-=-=-=-= : : : : DEVELOPMENT REMINDER: Add option for user to select whether to use RWI or RES. : : : : =-=-=-=-=-=-=-=-=-")
   # Compute lags and standard deviations
   data_with_drought_events[, `:=`(
     SPEIToUseLag1 = shift(SPEIToUse, 1, type = "lag"),
@@ -39,16 +39,19 @@ identify_drought_events <- function(chron_clim_data,
   # Define threshold values
   threshold_lag1 <- -1
   threshold_lag2 <- -1.5
+  message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Using -2 SD tree ring growth threshold for for delayed response. : : : : =-=-=-=-=-=-=-=-=-")
+  # Arbitrary non-standard, non-logical number used for growth. Remove later
+  threshold_lag2_grw <- -2
 
 
   # Identify drought conditions
   data_with_drought_events[, DroughtImmResp :=
                     (SPEIToUse < 0 & (SPEIToUse - SPEIToUseLag1) <= threshold_lag1 & (RESScaled - RESScaledLag1) <= threshold_lag1) |
-                    (SPEIToUse < 0 & (SPEIToUse - SPEIToUseLag2) <= threshold_lag2 & ((RESScaled - RESScaledLag1) <= threshold_lag1 | (RESScaled - RESScaledLag2) <= threshold_lag2))]
+                    (SPEIToUse < 0 & (SPEIToUse - SPEIToUseLag2) <= threshold_lag2 & ((RESScaled - RESScaledLag1) <= threshold_lag1 | (RESScaled - RESScaledLag2) <= threshold_lag2_grw))]
 
   data_with_drought_events[, DroughtDelResp :=
                            (SPEIToUseLag1 < 0 & (SPEIToUseLag1 - SPEIToUseLag2) <= threshold_lag1 & (RESScaled - RESScaledLag1) <= threshold_lag1) |
-   (!is.na(SPEIToUseLag3) & SPEIToUseLag1 < 0 & (SPEIToUseLag1 - SPEIToUseLag3) <= threshold_lag2 & ((RESScaled - RESScaledLag1) <= threshold_lag1 | (RESScaled - RESScaledLag2) <= threshold_lag2))]
+   (!is.na(SPEIToUseLag3) & SPEIToUseLag1 < 0 & (SPEIToUseLag1 - SPEIToUseLag3) <= threshold_lag2 & ((RESScaled - RESScaledLag1) <= threshold_lag1 | (RESScaled - RESScaledLag2) <= threshold_lag2_grw))]
 
   return(data_with_drought_events)
 }
@@ -134,12 +137,13 @@ identify_drought_years <- function(data_with_drought_events,
 
     # Remove drought years that have less than three records
   # In order to fit a negative exponential model, must have at least three records
-  drought_years <- drought_years[, .SD[.N >= 3] , by = c(get(group_col))]
+  message("-=-=-=-=-=-=-=-= : : : : TEMPORARYLY DEACTIVATED STEP: To allow QAQC of drought events moving forward. : : : : =-=-=-=-=-=-=-=-=-")
+  # drought_years <- drought_years[, .SD[.N >= 3] , by = c(get(group_col))]
 
   report <- drought_years[,.(NDrought = .N), keyby = c(get(group_col))]
   message("Below is the summary of droughts per group:\n\n\t")
   print(report)
-  message("IN DEVELOPMENT: Future versions will include details of removed droughts on the report and the reason for removal it.")
+  message("DEVELOPER REMINDER: Include details on removed droughts on the report and reason for it.")
 
   return(drought_years)
 }
