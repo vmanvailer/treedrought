@@ -40,13 +40,10 @@ calc_clim_drought_period <- function(clim_data,
                                      Year + fifelse(Month > growth_end["NH"], 1, 0),
                                      Year + fifelse(Month > growth_end["SH"], 1, 0) -1)]
 
-  message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Disabling year filter that keeps only the ones w/ 12 mo of data : : : : =-=-=-=-=-=-=-=-=-")
-  # message("Removing drought years with less than 12 months of data.")
+  message("Removing drought years with less than 12 months of data.")
   # # Remove data that does not have 12 months of records
-  # climate_data <- climate_data[, if (.N == 12) .SD, by = .(Id, DroughtYear)]
+  climate_data <- climate_data[, if (.N == 12) .SD, by = .(Id, DroughtYear)]
 
-  message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Filtering climate data to >= 1970 and <= 2017 before SPEI calculation : : : : =-=-=-=-=-=-=-=-=-")
-  climate_data <- climate_data[DroughtYear >= 1970 & DroughtYear <= 2017,]
   # Compute PET and water balance
   message("Computing PET and Water balance (Precipitation - PET)")
   climate_data[, PET := SPEI::thornthwaite(TAve, unique(.SD$Lat), verbose = FALSE), by = Id]
@@ -55,10 +52,9 @@ calc_clim_drought_period <- function(clim_data,
   # Calculate SPEI
   message(paste("Calculating SPEI using SPEI:spei() with scale parameter set to", spei_scale))
   climate_data <- climate_data[, SPEI := SPEI::spei(BAL, scale = spei_scale, verbose = FALSE, na.rm = TRUE)$fitted, by = Id]
-  # climate_data[, SPEI := spei_result$fitted]
 
   # Replace infinite values in SPEI
-  message("=-=-=-=-=-=- Come back to this. =-=-=-=-=-=-= Replacing infinite values in SPEI by NAs. ")
+  message("Replacing infinite values in SPEI by NAs.")
   climate_data[is.infinite(SPEI), SPEI := NA]
 
   # Sort the data to ensure correct rolling computation
@@ -87,9 +83,6 @@ calc_clim_drought_period <- function(clim_data,
   clim_drought_period[, AHM := (MeanTemp + 10) / (TotalPrec * 1000)]
 
   col_order <- c("Id", "DroughtYear", "MeanSPEI", "AHM", "MeanTemp", "TotalPrec")
-
-  message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Filtering climate data to >= 1971 & <= 2005 before SPEI rescaling : : : : =-=-=-=-=-=-=-=-=-")
-  clim_drought_period <- clim_drought_period[DroughtYear >= 1971 & DroughtYear <= 2005,]
 
   if(rescale_spei){
     message("'rescale_spei = TRUE'. Mean SPEI will be rescaled for the user provided time span. This is what we will use for threhsold drought detection.")
