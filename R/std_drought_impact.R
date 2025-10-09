@@ -3,25 +3,32 @@
 #' Orchestrates the full pipeline for calculating, modeling, and summarizing
 #' standardized drought impacts on tree-ring chronologies.  This wrapper function:
 #' 1. Aligns climate data to growth years and computes SPEI
-#' 2. Optionally imputes missing ring-width/index data
-#' 3. Merges climate and chronology
-#' 4. Detects site-level drought events
-#' 5. Defines regional drought years based on a user-specified group
-#' 6. Expands each drought event window to include pre- and post-drought years
-#' 7. Calculates resistance, recovery, and resilience indices
-#' 8. Fits a negative-exponential recovery curve, bootstraps it,
+#' 2. Merges climate and chronology
+#' 3. Detects site-level drought events
+#' 4. Defines regional drought years based on a user-specified group
+#' 5. Expands each drought event window to include pre- and post-drought years
+#' 6. Calculates resistance, recovery, and resilience indices
+#' 7. Fits a negative-exponential recovery curve, bootstraps it,
 #'    and evaluates recovery relative to the ideal “full resilience” line
 #'
 #' @param chron_data            data.table or data.frame of tree-ring data.
 #'                              Must contain columns `Id`, `Year`, and either `RWI` or `RES`.
 #' @param chron_group_col       Character vector naming the column(s) to group sites for regional drought detection
-#'                              (e.g. \"ADMIN_GROUPING\", \"CLUSTER\"); if NULL, all sites are treated as one group.
+#'                              (e.g. \"Region\", \"Cluster\"). Site level droughts are detected at the Id level
+#'                              and then used to defined group level drought years based on common patterns; if NULL,
+#'                              all sites are treated as one group.
 #' @param clim_data             data.table or data.frame of climate series.  Must contain `Id`, `Lat`, `Year`, `Month`, `TAve`, `Prec`.
 #' @param clim_growth_end       Named numeric vector c(NH=8, SH=2) indicating the final month of the growth year
 #'                              in each hemisphere (default 8=Aug for NH, 2=Feb for SH).
-#' @param clim_growth_period    Integer length of the growth year in months (default 12).
+#' @param clim_growth_period    Integer length of the growth year in months (default 12). Used for aggregating monthly
+#'                              drought metric e.g. SPEI into annual. Has to be < 12. A value of 6 for example would
+#'                              average the previous 6 months to the value informed on `clim_growth_end`,
+#'                              e.g. from Feb to Aug for NH if usign default values.
 #' @param clim_spei_scale       Integer scale for SPEI calculation (default 1 = 1-month SPEI).
 #' @param clim_rescale_spei     Logical; if TRUE (default), will z-score SPEI per site after calculation.
+#'                              Important: Only TRUE allowed. Future development will include ability to change
+#'                              thresholds for drought detection e.g. `thr_drought_detect_spei` and `thr_drought_detect_ring`
+#'                              (not implemented yet but currently set to 1 SD for both).
 #' @param thr_pointer_year_prop_sites Numeric in [0,1]; minimum proportion of sites in a group
 #'                              required to flag a pointer (drought) year (default 0.3).
 #' @param thr_multi_drought_tiebreak Numeric in [0,1]; proportion threshold for resolving
@@ -71,6 +78,11 @@ std_drought_impact <- function(
 
   conflicted::conflicts_prefer(data.table::`:=`)
   library(data.table)
+
+  if(!all(chron_group_col %in% names(chron_data))) {
+    diff_cols <- setdiff(chron_group_col, names(chron_data))
+    stop(paste0("The columns names {", paste(diff_cols, collapse = ", "),"} passed to 'chron_group_col' are not present in choronology data."))
+  }
 
   # Step 1: Align climate drought period to calendar years.
   message("Adjusting climate data.")
@@ -129,30 +141,31 @@ std_drought_impact <- function(
                                                      model_resistance_val)
 
   # Wrap all up.
-  predicted_recovery <- drought_recovery_model[,.(group_col, Id, ProjGrowthReduction50Mean, ProjGrowthReduction50SE)]
-  recovery <- list(intermediate_steps = list(
-                                 input_data = list(chron_data = chron_data,
-                                                   clim_data = clim_data),
-                                 params = list(chron_data_imput = chron_data_imput,
-                                               chron_group_col = chron_group_col,
-                                               clim_growth_end = clim_growth_end,
-                                               clim_growth_period = clim_growth_period,
-                                               clim_spei_scale = clim_spei_scale,
-                                               clim_rescale_spei = clim_rescale_spei,
-                                               thr_pointer_year_prop_sites = thr_pointer_year_prop_sites,
-                                               thr_multi_drought_tiebreak = thr_multi_drought_tiebreak,
-                                               n_years_baseline = n_years_baseline,
-                                               n_years_recovery = n_years_recovery,
-                                               model_min_n_drought_events = model_min_n_drought_events,
-                                               model_resistance_val = model_resistance_val),
-                                 climate_drought_metrics = chron_clim_data,
-                                 drought_events = data_with_drought_events,
-                                 drought_years = data_with_drought_years,
-                                 drought_events_expanded = data_with_drought_events_expanded,
-                                 calculated_indices = calculated_indices,
-                                 drought_recovery_model = drought_recovery_model),
-       predicted_recovery = predicted_recovery
-       )
+  group_cols <- c(chron_group_col, "Id", "RED50Mean", "RED50SE", "FitErrorMsg")
+  predicted_recovery <- drought_recovery_model[,mget(group_cols)]
+  recovery <- list(
+    predicted_recovery = predicted_recovery,
+    intermediate_steps = list(
+      input_data = list(chron_data = chron_data,
+                        clim_data = clim_data),
+      params = list(chron_group_col = chron_group_col,
+                    clim_growth_end = clim_growth_end,
+                    clim_growth_period = clim_growth_period,
+                    clim_spei_scale = clim_spei_scale,
+                    clim_rescale_spei = clim_rescale_spei,
+                    thr_pointer_year_prop_sites = thr_pointer_year_prop_sites,
+                    thr_multi_drought_tiebreak = thr_multi_drought_tiebreak,
+                    n_years_baseline = n_years_baseline,
+                    n_years_recovery = n_years_recovery,
+                    model_min_n_drought_events = model_min_n_drought_events,
+                    model_resistance_val = model_resistance_val),
+      climate_drought_metrics = chron_clim_data,
+      drought_events = data_with_drought_events,
+      drought_years = data_with_drought_years,
+      drought_events_expanded = data_with_drought_events_expanded,
+      calculated_indices = calculated_indices,
+      drought_recovery_model = drought_recovery_model)
+  )
 
   message("Analysis complete!\n\n\tFinal analysis is found on item 'predicted_recovery'.")
   return(recovery)

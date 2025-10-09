@@ -118,15 +118,15 @@ identify_drought_years <- function(data_with_drought_events,
     !IsMultiYearDrought & !DelRespMaj, DroughtImmRespGroupCount / DroughtAnyRespGroupCount, NA))     # is it a immediate response drought? If yes, calculate proportion, if not assign NA.)
   ]
 
-  data_with_drought_years_smry[ , MaxYear := max(Year, na.rm = TRUE), by = c(get(group_col))] # Used for removing droughts without a recovery period.
+  data_with_drought_years_smry[ , MaxYear := max(Year, na.rm = TRUE), by = group_col] # Used for removing droughts without a recovery period.
 
 
   # Filter years where at least thr_pointer_year_prop_sites (defaults to 0.3) proportion of sites experienced drought
   drought_years <- data_with_drought_years_smry[DroughtAnyRespProp > thr_pointer_year_prop_sites]
 
   # Group consecutive drought years to average then later.
-  drought_years[, DroughtGrouping := cumsum(c(0, diff(Year) != 1)), by = c(get(group_col))]
-  drought_years[, DroughtPeriod := paste0(min(Year), "-", max(Year)), by = c(get(group_col), "DroughtGrouping")]
+  drought_years[, DroughtGrouping := cumsum(c(0, diff(Year) != 1)), by = group_col]
+  drought_years[, DroughtPeriod := paste0(min(Year), "-", max(Year)), by = c(group_col, "DroughtGrouping")]
 
   # Remove drought years without a recovery period. The recovery period is defined
   # as the two years following the last drought year.
@@ -138,9 +138,9 @@ identify_drought_years <- function(data_with_drought_events,
     # Remove drought years that have less than three records
   # In order to fit a negative exponential model, must have at least three records
   message("-=-=-=-=-=-=-=-= : : : : TEMPORARYLY DEACTIVATED STEP: To allow QAQC of drought events moving forward. : : : : =-=-=-=-=-=-=-=-=-")
-  # drought_years <- drought_years[, .SD[.N >= 3] , by = c(get(group_col))]
+  # drought_years <- drought_years[, .SD[.N >= 3] , by = c(mget(group_col))]
 
-  report <- drought_years[,.(NDrought = .N), keyby = c(get(group_col))]
+  report <- drought_years[,.(NDrought = .N), keyby = group_col]
   message("Below is the summary of droughts per group:\n\n\t")
   print(report)
   message("DEVELOPER REMINDER: Include details on removed droughts on the report and reason for it.")

@@ -1,14 +1,15 @@
 library(tidyverse)
-path_data_root <- "G:/My Drive/1_Project & Courses/2_Project/2_Chapter 4 - Drought analysis"
+path_data_root <- "H:/My Drive/Work/1_PhD/2_Chapter 4 - Drought analysis"
 nls_m1d <- readRDS(file.path(path_data_root, "13. RRR nls - negative exponential modelling/13. nls_d_FILE_CODE_ctypes.Rds"))
 clusters_df <- read_csv(file.path(path_data_root, "09.a. Visualizing admin grouping world/09.a. clustering_res.csv"), col_types = "cff")
-tree_group <- read_csv("G:/My Drive/1_Project & Courses/2_Project/2_Chapter 1 - ITRDB datacleaning/7. Species names/genus_family_group.csv")
-state_label <- read_csv(file.path(path_data_root, "00. GIS/2025-06-23_FILE_CODE_state_labels.csv"))
+tree_group <- read_csv("H:/My Drive/Work/1_PhD/2_Chapter 1 - ITRDB datacleaning/7. Species names/genus_family_group.csv")
+tree_group <- read_csv("qaqc/old_pipeline/genus_family_group.csv")
+state_label <- read_csv(file.path(path_data_root, "00. GIS/cluster labels/2025-06-23_FILE_CODE_state_labels.csv"))
 filt_out2 <- read_csv(file.path(path_data_root, "16. sensitivity filter.csv"))
 d3 <- read_csv(file.path(path_data_root, "11. Expanded dataset for RRR calculation/11. drought df expanded full.csv")) |>
   mutate(CLUSTER = as.factor(CLUSTER))
 
-color_cluster3df <- read_csv(file.path(path_data_root, "18. Renumber clusters - Visualizing admin grouping world/color_cluster3df"), col_type = "fcfc")
+color_cluster3df <- read_csv(file.path(path_data_root, "18. Renumber clusters - Visualizing admin grouping world/color_cluster3df.csv"), col_type = "fcfc")
 
 d3_agg <- d3 |>
   group_by(ADMIN_GROUPING,CLUSTER,SPECIES_ITRDB_NAME,ADM_CLU_SPP,FILE_CODE) |>
@@ -142,15 +143,14 @@ nls_m1e <- nls_m1e %>%
          ADM_CLU2_SPP = paste(ADMIN_GROUPING, CLUSTER2, SPECIES_ITRDB_NAME, sep = "_"), .after = Genus) %>%
   left_join(tree_group, by = join_by(Genus == Genus)) |>
   left_join(d3_agg) |>
-  left_join(state_label) |>
-  mutate("")
+  left_join(state_label)
 
 # Filtering ====================================================================
 nls_m1e2 <- nls_m1e %>%
   mutate(CLUSTER = as.factor(CLUSTER),
          CLUSTER2 = as.factor(CLUSTER2)) %>%
   group_by(ADMIN_GROUPING, CLUSTER, CLUSTER2, Genus, SPECIES_ITRDB_NAME) %>%
-  filter(
+  dplyr::filter(
     !FILE_CODE %in% filt_out2$FILE_CODE, # from sensitivity analysis
     GRWRED50_MEAN <= 2,
     MAX_RESIST-MIN_RESIST > 0.15,
@@ -158,7 +158,7 @@ nls_m1e2 <- nls_m1e %>%
     # GRWRED10_MEAN <= 3
   ) %>%
   # filter(SPECIES_ITRDB_NAME %in% "Quercus coccinea") %>%
-  filter(n_distinct(FILE_CODE) >= 6,
+  dplyr::filter(n_distinct(FILE_CODE) >= 6,
          !(SPECIES_ITRDB_NAME %in% c("Populus tremuloides", "Picea mariana") & CLUSTER2 == 2), #
          !(SPECIES_ITRDB_NAME %in% c("Pinus ponderosa") & CLUSTER2 == 14),       # Distant from the coast and with some independent drought patterns
          !(SPECIES_ITRDB_NAME %in% c("Juniperus occidentalis") & CLUSTER2 == 8), # Independent drought dynamics, geographically distant and in lower numbers.

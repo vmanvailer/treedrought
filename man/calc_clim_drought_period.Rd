@@ -6,20 +6,20 @@
 \usage{
 calc_clim_drought_period(
   clim_data,
-  spei_scale = 1,
-  rescale_spei = TRUE,
+  growth_period = 12,
   growth_end = c(NH = 8, SH = 2),
-  growth_period = 12
+  spei_scale = 1,
+  rescale_spei = TRUE
 )
 }
 \arguments{
 \item{clim_data}{A data.table containing climate data with columns: Id (e.g. can001), Year, Month, TAve, Prec, Lat (latitude).}
 
-\item{spei_scale}{Numeric, the scale at which SPEI is calculated (default = 1 month). Refer to the time scale over which water deficit accumulates. A value of 3 indicates that the SPEI for March is based on the accumulated water deficit over January, February and March.}
+\item{growth_period}{Numeric, the number of months prior to \code{growth_end} that are thought to have influence growth. Will be used to average climate conditions for that period. E.g. if northern hemisphere summer (Jun, Jul and Aug) is the interest of investigation then this value would be 3 with \code{growth_end = 8} (for August)}
 
 \item{growth_end}{Numeric, the month when growth is thought to have stopped (default = \code{8} for Northern Hemisphere and \code{2} for Southern Hemisphere).}
 
-\item{growth_period}{Numeric, the number of months prior to \code{growth_end} that are thought to have influence growth. Will be used to average climate conditions for that period. E.g. if northern hemisphere summer (Jun, Jul and Aug) is the interest of investigation then this value would be 3 with \code{growth_end = 8} (for August)}
+\item{spei_scale}{Numeric, the scale at which SPEI is calculated (default = 1 month). Refer to the time scale over which water deficit accumulates. A value of 3 indicates that the SPEI for March is based on the accumulated water deficit over January, February and March.}
 }
 \value{
 A data.table with adjusted climate data, including calculated drought years, PET, water balance, and SPEI.

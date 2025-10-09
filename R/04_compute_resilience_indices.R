@@ -12,7 +12,7 @@ calculate_resilience_indices <- function(data_with_drought_events_expanded, grou
 
   # Ensure grouping columns are character
   if(!is.null(group_col)){
-    data_with_drought_events_expanded[, (group_col) := lapply(.SD, as.character), .SDcols = get(group_col)]
+    data_with_drought_events_expanded[, (group_col) := lapply(.SD, as.character), .SDcols = group_col]
   }
 
   # Remove non-drought years from data for calculating Resistance, Recovery and Resilience.
