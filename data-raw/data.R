@@ -1,52 +1,47 @@
-
-
-## --- Climate -------------------
-path_data_root_copy <- "G:/My Drive/1_Project & Courses/2_Project/2_Chapter 4 - Drought analysis"
-
-path_climate_udel_copy <- file.path(path_data_root_copy, "03. Filtering climate data", "03. UDEL_filter4.Rds")
-path_climate_udel_paste <- file.path("inst", "extdata", "climate_udel.Rds")
-
-path_chron_metadata_copy <- file.path(path_data_root_copy, "00. Base files", "Tree Rings", "3_Metadata_for_raw_and_chronology_data_files.csv")
-path_chron_metadata_paste <- file.path("inst", "extdata", "chronologies_itrdb_metadata.csv")
-
-file.copy(path_climate_udel_copy,
-          path_climate_udel_paste)
-
-file.copy(path_chron_metadata_copy,
-          path_chron_metadata_paste)
-
-
-climate_udel_rds <- readr::read_rds(path_climate_udel_paste)
-chron_metadata <- data.table::fread(path_chron_metadata_paste, select = c("FILE_CODE", "LAT_DEC_DEG"))
-
-climate_udel_dt <- data.table::rbindlist(climate_udel_rds, idcol = "Id")
-climate_udel_dt <- merge(climate_udel_dt, chron_metadata, by.x = "Id", by.y = "FILE_CODE", all.x = TRUE)
-data.table::setnames(climate_udel_dt, old = c("YEAR", "MONTH", "TAVE", "PREC", "LAT_DEC_DEG"), new = c("Year", "Month", "TAve", "Prec", "Lat"))
+source("data-raw/load_thesis_data.R")
+thesis_data <- load_thesis_data("Detrended imputed")
 
 path_climate_udel_dt <- "inst/extdata/climate_udel_dt.csv"
-# if(file.exists(path_climate_udel_dt)){
-#   fwrite(climate_udel_dt, path_climate_udel_dt)
-# }
+if(!file.exists(path_climate_udel_dt)){
+  climate_udel_dt <- thesis_data$climate_udel_dt
+  data.table::fwrite(climate_udel_dt, path_climate_udel_dt)
+  usethis::use_data(climate_udel_dt, overwrite = TRUE)
+} else {
+  warning("Skipping writing climate data. File already exists at:\n\t", path_climate_udel_dt)
+}
 
-## --- Tree rings ------------------
-path_chron_itrdb_copy <- file.path(path_data_root_copy, "01. Filtering tree ring sites", "01. crn_filter.rds")
-path_chron_itrdb_paste <- file.path("inst", "extdata", "chronologies_itrdb.rds")
+path_chronologies_itrdb_dt <- "inst/extdata/chronologies_itrdb_dt.csv"
+if(!file.exists(path_chronologies_itrdb_dt)){
+  chron_itrdb_dt <- thesis_data$chron_itrdb_dt
+  data.table::fwrite(chron_itrdb_dt, path_chronologies_itrdb_dt)
+  usethis::use_data(chron_itrdb_dt, overwrite = TRUE)
+} else {
+  warning("Skipping writing choronology data. File already exists at:\n\t", path_chronologies_itrdb_dt)
+}
 
-file.copy(path_chron_itrdb_copy,
-          path_chron_itrdb_paste)
+path_chronologies_itrdb_meta <- "inst/extdata/chronologies_itrdb_meta.csv"
+if(!file.exists(path_chronologies_itrdb_meta)){
+  chron_itrdb_meta <- thesis_data$chron_itrdb_meta
+  data.table::fwrite(chron_itrdb_meta, path_chronologies_itrdb_meta)
+  usethis::use_data(chron_itrdb_meta, overwrite = TRUE)
+} else {
+  warning("Skipping writing choronology metadata. File already exists at:\n\t", path_chronologies_itrdb_meta)
+}
 
-chron_itrdb_rds <- readr::read_rds(path_chron_itrdb_paste)
-chron_itrdb_dt <- data.table::rbindlist(chron_itrdb_rds, idcol = "Id")
-data.table::setnames(chron_itrdb_dt, old = c("YEAR"), new = c("Year"))
-data.table::fwrite(chron_itrdb_dt, "inst/extdata/chronologies_itrdb_dt.csv")
+path_clusters <- "inst/extdata/clusters.csv"
+if(!file.exists(path_clusters)){
+  clusters <- thesis_data$thesis_clusters
+  data.table::fwrite(thesis_data$thesis_clusters, path_clusters)
+  usethis::use_data(clusters, overwrite = TRUE)
+} else {
+  warning("Skipping writing clsutering data. File already exists at:\n\t", path_clusters)
+}
 
-## --- Final datasets produced -------------------
-final <- list(climate_udel_dt = climate_udel_dt,
-                    chron_itrdb_dt = chron_itrdb_dt)
-
-# clim_data <- fread("inst/extdata/climate_udel_dt.csv")
-# chron_data <- fread("inst/extdata/chronologies_itrdb_dt.csv")
-
-# For testing must use original rds and convert to data.table otherwise results won't
-# match due precision issues when saving to CSVs
-
+path_sensitivity_filter <- "inst/extdata/sensitivity_filter.csv"
+if(!file.exists(path_sensitivity_filter)){
+  sensitivity_filter <- thesis_data$thesis_sens_filter
+  data.table::fwrite(sensitivity_filter, path_sensitivity_filter)
+  usethis::use_data(sensitivity_filter, overwrite = TRUE)
+} else {
+  warning("Skipping writing sensitivity data. File already exists at:\n\t", path_sensitivity_filter)
+}

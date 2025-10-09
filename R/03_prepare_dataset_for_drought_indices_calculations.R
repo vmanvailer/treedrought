@@ -44,12 +44,13 @@ prepare_resilience_dataset <- function(data_with_drought_events,
 
   # Ensure grouping variables are character
   data_with_drought_years[, (group_col) := lapply(.SD, as.character), .SDcols = group_col]
+  data_with_drought_events[, (group_col) := lapply(.SD, as.character), .SDcols = group_col]
 
   # Tag each year as "DROUGHT"
   data_with_drought_years[, YearType := "Drought"]
 
   # Split by DroughtGrouping
-  drought_split <- split(data_with_drought_years, by = c(get(group_col), "DroughtGrouping", "DroughtPeriod"))
+  drought_split <- split(data_with_drought_years, by = c(group_col, "DroughtGrouping", "DroughtPeriod"))
 
   # Expand each group to pre- and post-drought years
   expanded_list <- lapply(drought_split, function(dt) {
@@ -64,8 +65,11 @@ prepare_resilience_dataset <- function(data_with_drought_events,
 
     pre_rows <- cbind(shared_cols, pre_rows)
     post_rows <- cbind(shared_cols, post_rows)
-
-    dt_drought <- dt[,.(group_col, DroughtGrouping, DroughtPeriod, Year, YearType = "Drought")]
+    # If group_col is both the object and a column within the data that will cause name conflict during subset.
+    # Create a temporary column for easier subsetting.
+    group_col_temp <- c(group_col, "DroughtGrouping", "DroughtPeriod", "Year")
+    dt_drought <- dt[,..group_col_temp]
+    dt_drought[, YearType := "Drought"]
 
     out <- rbindlist(list(pre_rows, dt_drought, post_rows), use.names = TRUE)
     setcolorder(out, c(group_col, "Year", "DroughtGrouping", "DroughtPeriod", "YearType"))
@@ -79,7 +83,7 @@ prepare_resilience_dataset <- function(data_with_drought_events,
   data_with_drought_events_expanded <- merge(data_with_drought_events,
                                              expanded_dt,
                                              all = TRUE,
-                                             by = c(get(group_col), "Year"),
+                                             by = c(group_col, "Year"),
                                              allow.cartesian = TRUE)
   setorder(data_with_drought_events_expanded,
            Id, Year, YearType)

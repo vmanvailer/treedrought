@@ -5,9 +5,12 @@ Authors@R:
     person("Vinicius", "Manvailer", , "vmgoncal@ualberta.ca", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-6529-4474"))
 Description: Uses tree ring data and monthly climate data to identify ecologically defined drought events, calculate resilience indices and model a standardized recovery capacity of trees/sites.
-Depends: data.table,
-         SPEI
+Depends: 
+    data.table,
+    R (>= 2.10),
+    SPEI
 License: None
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+LazyData: true

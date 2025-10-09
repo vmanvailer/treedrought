@@ -17,7 +17,8 @@ model_resilience_indices <- function(calculated_indices,
   setDT(calculated_indices)
   calculated_indices[, (chron_group_col) := lapply(.SD, as.character), .SDcols = chron_group_col]
 
-  calculated_indices_wide <- dcast(calculated_indices, Id + group_col + DroughtPeriod + RRRClass ~ Indices, value.var = "Value")
+  form <- formula(paste0("Id + ", paste(chron_group_col, collapse = " + ")," + DroughtPeriod + RRRClass ~ Indices"))
+  calculated_indices_wide <- dcast(calculated_indices, form, value.var = "Value")
 
   message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Removing droughts with recovery > 100 due to convergence issues. : : : : =-=-=-=-=-=-=-=-=-")
   # from script 13. RRR nls - negative exponential modelling line #56.
@@ -31,6 +32,14 @@ model_resilience_indices <- function(calculated_indices,
   cols <- c("Id", chron_group_col)
   drought_counts <- unique(calculated_indices_wide[, .(NDroughts = uniqueN(DroughtPeriod)), by = cols])
   valid_groups <- drought_counts[NDroughts >= model_min_n_drought_events]
+  if(nrow(valid_groups)<1){
+    stop("There are no Id with more than, ",
+         model_min_n_drought_events,
+         " droughts.\nPotential approaches:
+         \tChose a smaller number (minimum of 3 for statistically valid results);
+         \tExpand the period of research,
+         \tExapnd the grouping variable (which may help by including more droughts)")
+  }
   calculated_indices_valid <- calculated_indices_wide[valid_groups, on = cols]
 
   # Nest data by group
@@ -184,11 +193,12 @@ model_resilience_indices <- function(calculated_indices,
     df[, Recovery50Diff := Recovery50 - FullRecovery50]
     df[, ProjGrowthReduction50 := Recovery50Diff / FullRecovery50]
     return(df)
-  }, ModeledRecoveryBootstrapped, SuccessfullyModeled)]
+  }, ModeledRecoveryBootstrapped, SuccessfullyModeled,
+  SIMPLIFY = FALSE)]
 
   message(paste0("Calculating mean projected growth recovery at 0.5 Resistance for each combination of: ", paste(cols, collapse = ", ")))
   # Summarize ProjGrowthReduction50: mean and standard error
-  nested[, c("ProjGrowthReduction50Mean", "ProjGrowthReduction50SE") :=
+  nested[, c("RED50Mean", "RED50SE") :=
            transpose(Map(function(df) {
              if (is.data.table(df) && "ProjGrowthReduction50" %in% names(df)) {
                c(mean(df$ProjGrowthReduction50, na.rm = TRUE),

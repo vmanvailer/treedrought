@@ -25,18 +25,26 @@ std_drought_impact(
 Must contain columns \code{Id}, \code{Year}, and either \code{RWI} or \code{RES}.}
 
 \item{chron_group_col}{Character vector naming the column(s) to group sites for regional drought detection
-(e.g. \"ADMIN_GROUPING\", \"CLUSTER\"); if NULL, all sites are treated as one group.}
+(e.g. \"Region\", \"Cluster\"). Site level droughts are detected at the Id level
+and then used to defined group level drought years based on common patterns; if NULL,
+all sites are treated as one group.}
 
 \item{clim_data}{data.table or data.frame of climate series.  Must contain \code{Id}, \code{Lat}, \code{Year}, \code{Month}, \code{TAve}, \code{Prec}.}
 
 \item{clim_growth_end}{Named numeric vector c(NH=8, SH=2) indicating the final month of the growth year
 in each hemisphere (default 8=Aug for NH, 2=Feb for SH).}
 
-\item{clim_growth_period}{Integer length of the growth year in months (default 12).}
+\item{clim_growth_period}{Integer length of the growth year in months (default 12). Used for aggregating monthly
+drought metric e.g. SPEI into annual. Has to be < 12. A value of 6 for example would
+average the previous 6 months to the value informed on \code{clim_growth_end},
+e.g. from Feb to Aug for NH if usign default values.}
 
 \item{clim_spei_scale}{Integer scale for SPEI calculation (default 1 = 1-month SPEI).}
 
-\item{clim_rescale_spei}{Logical; if TRUE (default), will z-score SPEI per site after calculation.}
+\item{clim_rescale_spei}{Logical; if TRUE (default), will z-score SPEI per site after calculation.
+Important: Only TRUE allowed. Future development will include ability to change
+thresholds for drought detection e.g. \code{thr_drought_detect_spei} and \code{thr_drought_detect_ring}
+(not implemented yet but currently set to 1 SD for both).}
 
 \item{thr_pointer_year_prop_sites}{Numeric in \link{0,1}; minimum proportion of sites in a group
 required to flag a pointer (drought) year (default 0.3).}
@@ -65,7 +73,6 @@ Orchestrates the full pipeline for calculating, modeling, and summarizing
 standardized drought impacts on tree-ring chronologies.  This wrapper function:
 \enumerate{
 \item Aligns climate data to growth years and computes SPEI
-\item Optionally imputes missing ring-width/index data
 \item Merges climate and chronology
 \item Detects site-level drought events
 \item Defines regional drought years based on a user-specified group

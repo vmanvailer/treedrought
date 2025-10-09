@@ -4,7 +4,10 @@
 \alias{calculate_resilience_indices}
 \title{Calculate Resistance, Recovery and Resisilience Indices}
 \usage{
-calculate_resilience_indices(data_with_drought_events_expanded, group_col)
+calculate_resilience_indices(
+  data_with_drought_events_expanded,
+  group_col = NULL
+)
 }
 \arguments{
 \item{data_with_drought_events_expanded}{A data.table containing expanded drought years with YearType labels.}
