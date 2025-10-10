@@ -43,11 +43,15 @@ impute_chronology_data <- function(chron_data) {
   # Check for required columns and provide specific error messages
   missing_cols <- setdiff(required_cols, names(chron_data))
   if (length(missing_cols) > 0) {
-    stop(paste("Missing required column(s):", paste(missing_cols, collapse = ", ")))
+    msg <- paste("Missing required column(s):", paste(missing_cols, collapse = ", "))
+    if (verbose) log_message(msg)
+    stop(if(!verbose) msg)
   }
 
   if (length(present_cols) == 0) {
-    stop("At least one of 'RWI' or 'RES' must be present.")
+    msg <- "At least one of 'RWI' or 'RES' must be present."
+    if (verbose) log_message(msg)
+    stop(if(!verbose) msg)
   }
 
   # Reshape data to wide format for imputation
@@ -59,7 +63,9 @@ impute_chronology_data <- function(chron_data) {
   # Identify and remove columns that are completely NA
   na_cols <- names(chron_wide)[colSums(!is.na(chron_wide)) == 0]
   if (length(na_cols) > 0) {
-    warning("The following columns were removed because they contained only NA values: ", paste(na_cols, collapse = ", "))
+    msg <- paste0("The following columns were removed because they contained only NA values: ", paste(na_cols, collapse = ", "))
+    if (verbose) log_message(msg)
+    warning(if(!verbose) msg)
     chron_wide <- chron_wide[, !na_cols, with = FALSE]
   }
 
@@ -68,7 +74,7 @@ impute_chronology_data <- function(chron_data) {
   formula_str <- paste("Id ~", paste(year_cols, collapse = " + "))
   form <- as.formula(formula_str)
 
-  message("Applying imputing algorithm:\n\t 'rfImpute(formula, data, iter = 3, ntree = 10000)'")
+  if (verbose) log_message("Applying imputing algorithm:\n\t 'rfImpute(formula, data, iter = 3, ntree = 10000)'")
   # Apply Random Forest imputation
   chron_imputed <- randomForest::rfImpute(form, data = chron_wide, iter = 3, ntree = 10000)
 

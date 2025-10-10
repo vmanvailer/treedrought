@@ -31,15 +31,14 @@ helper_nls_fit_recovery_model <- function(data) {
 #' @param data The original dataset used to fit the model.
 #' @return A bootstrapped `nlsBoot` object or NA if error.
 #' @export
-helper_nls_bootstrap_nls_model <- function(model_successful, model, data, id, idx, total, start_time) {
+helper_nls_bootstrap_nls_model <- function(model_successful, model, data, id, idx, total, start_time, verbose = TRUE) {
   tryCatch({
     start_file <- Sys.time()
 
     # Handle unsuccessful models early
     if (!model_successful) {
       msg <- "Base nls model not completed successfully. Can't bootstrap this record. Check column 'FitErrorMsg' for more details."
-      message(sprintf("%s\tFAIL\tSkipping (%d/%d): %s\n\t%s",
-                      format(start_file, "%Y-%m-%d %H:%M:%S"), idx, total, id, msg))
+      if (verbose) log_message(sprintf("Skipping (%d/%d): %s\n\t%s", idx, total, id, msg), level = "WARN")
       return(msg)
       }
 
@@ -59,15 +58,14 @@ helper_nls_bootstrap_nls_model <- function(model_successful, model, data, id, id
     fmt_total <- function(x) if (x < 3600) sprintf("%.1f mins", x/60) else sprintf("%.1f hours", x/3600)
 
     # Message
-    message(sprintf("%s\tINFO\t(%d/%d) Finished bootstrapping: %s (in %s) | Total time: %s\n",
-                    format(start_file, "%Y-%m-%d %H:%M:%S"),
+    if (verbose) log_message(sprintf("(%d/%d) Finished bootstrapping: %s (in %s) | Total time: %s\n",
                     idx, total, id,
                     fmt_time(file_time),
                     fmt_total(total_time)))
 
     return(boot)
   }, error = function(e) {
-    message(sprintf("ERROR\t(%d/%d)\t%s: %s\n", idx, total, id, e$message))
+    if (verbose) log_message(sprintf("(%d/%d)\t%s: %s\n", idx, total, id, e$message), level = "ERROR")
     return(e$message)
   })
 }
@@ -80,11 +78,12 @@ helper_nls_bootstrap_nls_model <- function(model_successful, model, data, id, id
 #' @param data    A data.table with a numeric column `Resistance`.
 #' @return A data.table with Resistance, median_ci, lwr_ci, upr_ci, fit_sp_ci, and full_res.
 #' @export
-helper_nls_predict_ci_band <- function(model_successful, model, nls_boot, data, id, idx, total, start_time) {
+helper_nls_predict_ci_band <- function(model_successful, model, nls_boot, data, id, idx, total, start_time,
+                                       verbose = TRUE) {
   start_file <- Sys.time()
   if (!model_successful) {
-    message(sprintf("%s\tFAIL\tSkipping (%d/%d): %s",
-                    format(start_file, "%Y-%m-%d %H:%M:%S"), idx, total, id))
+    if (verbose) log_message(sprintf("\tSkipping (%d/%d): %s",
+                    idx, total, id), level = "WARN")
     return(NA)
   }
 
@@ -123,11 +122,10 @@ helper_nls_predict_ci_band <- function(model_successful, model, nls_boot, data, 
   fmt_total <- function(x) if (x < 3600) sprintf("%.1f mins", x/60) else sprintf("%.1f hours", x/3600)
 
   # Message
-  message(sprintf("%s\tINFO\t(%d/%d) Finished calculating CI for: %s (in %s) | Total time: %s\n",
-                  format(start_file, "%Y-%m-%d %H:%M:%S"),
+  if (verbose) log_message(sprintf("(%d/%d) Finished calculating CI for: %s (in %s) | Total time: %s\n",
                   idx, total, id,
                   fmt_time(file_time),
-                  fmt_total(total_time)))
+                  fmt_total(total_time)), level = "INFO")
 
   return(out)
 }

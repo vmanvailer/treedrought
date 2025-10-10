@@ -13,7 +13,8 @@
 model_resilience_indices <- function(calculated_indices,
                                      chron_group_col,
                                      model_min_n_drought_events = 3,
-                                     model_resistance_val = 0.5) {
+                                     model_resistance_val = 0.5,
+                                     verbose = TRUE) {
   setDT(calculated_indices)
   calculated_indices[, (chron_group_col) := lapply(.SD, as.character), .SDcols = chron_group_col]
 
@@ -46,7 +47,7 @@ model_resilience_indices <- function(calculated_indices,
   message(paste0("Nesting data by: ", paste(cols, collapse = ", ")))
   nested <- calculated_indices_valid[, .(data = list(.SD)), by = cols]
 
-  message("Modeling recovery with nls2.")
+  if (verbose) log_message("Modeling recovery with nls2.")
   # Fit models
   nested[, ModeledRecoveryFit := lapply(data, helper_nls_fit_recovery_model)]
   nested[, SuccessfullyModeled := sapply(ModeledRecoveryFit, function(x){
@@ -64,53 +65,22 @@ model_resilience_indices <- function(calculated_indices,
     if (is.character(x)) x else NA_character_
   })]
 
-  message("Bootstrapping model for calculating confidence intervals.")
-  # # Bootstrap (long run | ~2 min cluster level or 20+min for Id level)
-  # if (parallel::detectCores() > 1) {
-  #   # Use parallel if possible
-  #   future::plan(future::multisession, workers = floor(0.8 * parallel::detectCores()))
-  # } else {
-  #   # Fallback to sequential
-  #   future::plan(future::sequential)
-  # }
-  #
-  # # time_started <- Sys.time()
-  # # Split Ids into chunks (1 chunk per worker)
-  # ids <- unique(nested$Id[1:60])
-  # chunks <- split(ids, cut(seq_along(ids), 8, labels = FALSE))
-  #
-  # # Each worker runs its whole chunk sequentially
-  # results <- future.apply::future_lapply(chunks, function(id_subset) {
-  #   out <- list()
-  #   for (id in id_subset) {
-  #     dat <- nested[Id == id]$data[[1]]
-  #     model <- nested[Id == id]$ModeledRecoveryFit[[1]]
-  #     boot <- helper_nls_bootstrap_nls_model(model, dat, id, start_time)
-  #     out[[id]] <- boot
-  #   }
-  #   out
-  # })
-  #
-  # # Combine results
-  # all_results <- do.call(c, results)
+  if (verbose) log_message("Bootstrapping model for calculating confidence intervals.")
 
-  #
-  #
   time_started <- Sys.time()
-  # nested <- nested[sample(1:nrow(nested), 60)][, ModeledRecoveryBootstrapped :=
   total_ids <- nrow(nested)
   nested <- nested[, ModeledRecoveryBootstrapped :=
-           Map(helper_nls_bootstrap_nls_model,
-               SuccessfullyModeled,
-               ModeledRecoveryFit,
-               data,
-               Id,
-               seq_len(total_ids),
-               MoreArgs = list(total = total_ids, start_time = time_started))]
+                     Map(helper_nls_bootstrap_nls_model,
+                         SuccessfullyModeled,
+                         ModeledRecoveryFit,
+                         data,
+                         Id,
+                         seq_len(total_ids),
+                         MoreArgs = list(total = total_ids, start_time = time_started, verbose = verbose))]
 
-  message("Calculating confidence intervals from bootstrapped results.")
+  if (verbose) log_message("Calculating confidence intervals from bootstrapped results.")
   # Predict Confidence Interval band
-  # To properly create a smooth CI band around fit must create
+  # To properly create a smooth CI band around fit must create it.
   time_started <- Sys.time()
   nested[, RecoveryCIFromBootstrapping :=
            Map(helper_nls_predict_ci_band,
@@ -120,9 +90,9 @@ model_resilience_indices <- function(calculated_indices,
                data,
                Id,
                seq_len(total_ids),
-               MoreArgs = list(total = total_ids, start_time = time_started))]
+               MoreArgs = list(total = total_ids, start_time = time_started, verbose = verbose))]
 
-  message("Calculating where CI bands intersect with full recovery model.")
+  if (verbose) log_message("Calculating where CI bands intersect with full recovery model.")
   # Intersections
   nested[, FullModelIntersectsWithCIBands := Map(helper_nls_compute_intersections, RecoveryCIFromBootstrapping, SuccessfullyModeled)]
   nested[, c("upr_cross_type", "upr_intsct_thr", "lwr_cross_type", "lwr_intsct_thr", "med_intsct_thr") :=
@@ -146,7 +116,7 @@ model_resilience_indices <- function(calculated_indices,
              }
            }, FullModelIntersectsWithCIBands, SuccessfullyModeled, SIMPLIFY = FALSE))]
 
-  message("Calculating RSME.")
+  if (verbose) log_message("Calculating RSME.")
   # Calculate RMSE, model parameters, standard errors, and number of droughts
   nested[, RMSE := mapply(function(m, ok) if(ok) round(sqrt(mean(residuals(m)^2)), 4) else NA,
                           ModeledRecoveryFit, SuccessfullyModeled)]
@@ -164,7 +134,7 @@ model_resilience_indices <- function(calculated_indices,
   nested[, NDrought := sapply(data, function(d) uniqueN(d$DroughtPeriod))]
 
 
-  message("Calculating the recovery range limits by on CI.")
+  if (verbose) log_message("Calculating the recovery range limits by on CI.")
   # Compute recovery range limits based on CI intersections
   limits_list <- Map(helper_nls_range_limits,
                      nested$data,
@@ -176,7 +146,7 @@ model_resilience_indices <- function(calculated_indices,
              "full_rec_lower_limit","full_rec_upper_limit",
              "over_rec_lower_limit","over_rec_upper_limit") := transpose(limits_list)]
 
-  message("Projecting growth impact for comparison.")
+  if (verbose) log_message("Projecting growth impact for comparison.")
   # Estimate recovery at model_resistance_val and compute growth reduction metrics
   nested[, Recovery50MDL := mapply(function(boot, ok) {
     if (is.na(ok) || !ok) return(NA)
@@ -196,7 +166,7 @@ model_resilience_indices <- function(calculated_indices,
   }, ModeledRecoveryBootstrapped, SuccessfullyModeled,
   SIMPLIFY = FALSE)]
 
-  message(paste0("Calculating mean projected growth recovery at 0.5 Resistance for each combination of: ", paste(cols, collapse = ", ")))
+  if (verbose) log_message(paste0("Calculating mean projected growth recovery at 0.5 Resistance for each combination of: ", paste(cols, collapse = ", ")))
   # Summarize ProjGrowthReduction50: mean and standard error
   nested[, c("RED50Mean", "RED50SE") :=
            transpose(Map(function(df) {

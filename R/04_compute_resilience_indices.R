@@ -7,7 +7,8 @@
 #' @param group_col Character vector with grouping columns (e.g., c("AdminGrouping", "Cluster", "SpeciesItrdbName", "AdmCluSpp")).
 #'
 #' @return A data.table with long-format RRR indices.
-calculate_resilience_indices <- function(data_with_drought_events_expanded, group_col = NULL) {
+calculate_resilience_indices <- function(data_with_drought_events_expanded,
+                                         group_col = NULL) {
   setDT(data_with_drought_events_expanded)
 
   # Ensure grouping columns are character

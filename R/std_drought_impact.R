@@ -37,6 +37,7 @@
 #' @param n_years_recovery      Integer number of post-drought years to include (default 2).
 #' @param model_min_n_drought_events Integer minimum distinct drought events per group to fit the recovery model (default 3).
 #' @param model_resistance_val  Numeric resistance value at which to compare modeled recovery vs full resilience (default 0.5).
+#' @param verbose               Logical outputs messages in the console and in a log file to current directory.
 #'
 #' @return A named list with two elements:
 #'   \describe{
@@ -73,55 +74,76 @@ std_drought_impact <- function(
     n_years_baseline = 2,
     n_years_recovery = 2,
     model_min_n_drought_events = 3,
-    model_resistance_val = 0.5
+    model_resistance_val = 0.5,
+    verbose = TRUE
 ){
 
   conflicted::conflicts_prefer(data.table::`:=`)
   library(data.table)
 
+  # Validate chronology data columns.
+  # Must have Id and Year, and at least one of RWI or RES.
+  required_cols <- c("Id", "Year")
+  rwi_res_cols <- c("RWI", "RES")
+  present_cols <- rwi_res_cols[rwi_res_cols %in% names(chron_data)]
+  missing_cols <- setdiff(required_cols, names(chron_data))
+  if (length(missing_cols) > 0) {
+    stop(paste("Missing required column(s):", paste(missing_cols, collapse = ", ")))
+  }
+  if (length(present_cols) == 0) {
+    stop("At least one of 'RWI' or 'RES' must be present.")
+  }
+
+  # Validate grouping columns
   if(!all(chron_group_col %in% names(chron_data))) {
     diff_cols <- setdiff(chron_group_col, names(chron_data))
     stop(paste0("The columns names {", paste(diff_cols, collapse = ", "),"} passed to 'chron_group_col' are not present in choronology data."))
   }
 
+    # Climate data validation is carried out on the next function.
+
   # Step 1: Align climate drought period to calendar years.
-  message("Adjusting climate data.")
+  if (verbose) log_message("Adjusting climate data.")
   clim_drought_period <- calc_clim_drought_period(
     clim_data = clim_data,
     spei_scale = clim_spei_scale,
     rescale_spei = clim_rescale_spei,
     growth_end = clim_growth_end,
-    growth_period = clim_growth_period
+    growth_period = clim_growth_period,
+    verbose = verbose
     )
 
   # Step 2: Combine chron_data and clim_data (and scale climate data per site)
-  message("Combining chronology and climate datasets for detection of drought events.")
+  if (verbose) log_message("Combining chronology and climate datasets for detection of drought events.")
   chron_clim_data <- merge_climate_growth_data(chron_data,
-                                               clim_drought_period)
+                                               clim_drought_period,
+                                               verbose = verbose)
 
   # Step 3: Identify drought events
-  message("Detecting drought events. Drought defined as:\n\tGrowth decrease <= -1 SD\n\tSPEI decrease <= -1 SD\n\n\tand\n\n\tGrowth decrease <= -2 SD over two years\n\tSPEI decrease <= -1.5 SD")
-  data_with_drought_events <- identify_drought_events(chron_clim_data)
+  if (verbose) log_message("Detecting drought events. Drought defined as:\n\tGrowth decrease <= -1 SD\n\tSPEI decrease <= -1 SD\n\n\tand\n\n\tGrowth decrease <= -2 SD over two years\n\tSPEI decrease <= -1.5 SD")
+  data_with_drought_events <- identify_drought_events(chron_clim_data,
+                                                      verbose = verbose)
 
   # Step 4: Prepare grouping if available.
   # Assign all sites to the same group if no grouping column is provided
   if (is.null(chron_group_col)) {
-    message("No grouping identified. Drought years will be selected based on the entire dataset.")
+    if (verbose) log_message("No grouping identified. Drought years will be selected based on the entire dataset.")
     data_with_drought_events[, Group := "ALL"]
     chron_group_col <- "Group"
   }
 
   # Step 5: Select pointer years from drought events
-  message("Defining drought years across 'chron_group_col'.")
+  if (verbose) log_message("Defining drought years across 'chron_group_col'.")
   data_with_drought_years <- identify_drought_years(data_with_drought_events,
                                                     chron_group_col,
                                                     n_years_recovery,
                                                     thr_pointer_year_prop_sites,
-                                                    thr_multi_drought_tiebreak)
+                                                    thr_multi_drought_tiebreak,
+                                                    verbose = verbose)
 
   # Step 6: Prepare expanded dataset for resilience index calculation
   # Future improvement: are different drought components allowed to overlap? e.g. can a post drought period overlap with a pre-drought period?
-  message("Preparing data for resilience index calculations.")
+  if (verbose) log_message("Preparing data for resilience index calculations.")
   data_with_drought_events_expanded <- prepare_resilience_dataset(data_with_drought_events = data_with_drought_events,
                                                                  data_with_drought_years = data_with_drought_years,
                                                                  group_col = chron_group_col,
@@ -129,16 +151,17 @@ std_drought_impact <- function(
                                                                  n_years_recovery)
 
   # Step 7: Calculate resilience indices
-  message("Computing resilience indices.")
+  if (verbose) log_message("Computing resilience indices.")
   calculated_indices <- calculate_resilience_indices(data_with_drought_events_expanded,
                                                      chron_group_col)
 
   # Step 8: Model resilience indices with negative exponential fitting
-  message("Fitting negative exponential to resilience indices.")
+  if (verbose) log_message("Fitting negative exponential to resilience indices.")
   drought_recovery_model <- model_resilience_indices(calculated_indices,
                                                      chron_group_col,
                                                      model_min_n_drought_events,
-                                                     model_resistance_val)
+                                                     model_resistance_val,
+                                                     verbose = verbose)
 
   # Wrap all up.
   group_cols <- c(chron_group_col, "Id", "RED50Mean", "RED50SE", "FitErrorMsg")
@@ -167,7 +190,7 @@ std_drought_impact <- function(
       drought_recovery_model = drought_recovery_model)
   )
 
-  message("Analysis complete!\n\n\tFinal analysis is found on item 'predicted_recovery'.")
+  if (verbose) log_message("Analysis complete!\n\n\tFinal analysis is found on item 'predicted_recovery'.")
   return(recovery)
 }
 

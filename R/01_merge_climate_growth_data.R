@@ -1,4 +1,6 @@
-merge_climate_growth_data <- function(chron_data, clim_drought_period) {
+merge_climate_growth_data <- function(chron_data,
+                                      clim_drought_period,
+                                      verbose = TRUE) {
   # Ensure data.table format
   data.table::setDT(chron_data)
   data.table::setDT(clim_drought_period)
@@ -43,9 +45,9 @@ merge_climate_growth_data <- function(chron_data, clim_drought_period) {
   n_ids_missing_clim <- nrow(missing_report[YearsMissingClim != ""])
   n_ids_missing_chron <- nrow(missing_report[YearsMissingChron != ""])
 
-  message(sprintf("Merge Report:\n"))
-  message(sprintf("  Number of Ids with missing climate data: %d\n", n_ids_missing_clim))
-  message(sprintf("  Number of Ids with missing chronology data: %d\n", n_ids_missing_chron))
+  if (verbose) log_message("Merge Report:\n")
+  if (verbose) log_message(paste0("  Number of Ids with missing climate data: %d\n", n_ids_missing_clim))
+  if (verbose) log_message(paste0("  Number of Ids with missing chronology data: %d\n", n_ids_missing_chron))
 
   # Return the merged data and the missing data report
   return(list(data_with_calculated_drought_metrics = merged_data,

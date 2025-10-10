@@ -17,7 +17,8 @@ calc_clim_drought_period <- function(clim_data,
                                      growth_period = 12,
                                      growth_end = c(NH = 8, SH = 2),
                                      spei_scale = 1,
-                                     rescale_spei = TRUE
+                                     rescale_spei = TRUE,
+                                     verbose = TRUE
 ) {
   library(data.table)
   library(SPEI)
@@ -31,7 +32,8 @@ calc_clim_drought_period <- function(clim_data,
     stop("Missing required columns: ", paste(setdiff(required_cols, names(climate_data)), collapse = ", "))
   }
 
-  message("Calculating hemisphere drought year.")
+  if (verbose) log_message("Calculating hemisphere drought year.")
+
   # Assign hemisphere based on latitude
   climate_data[, Hm := fifelse(Lat >= 0, "NH", "SH")]
 
@@ -48,24 +50,25 @@ calc_clim_drought_period <- function(clim_data,
   message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Filtering climate data to >= 1970 and <= 2017 before SPEI calculation : : : : =-=-=-=-=-=-=-=-=-")
   climate_data <- climate_data[DroughtYear >= 1970 & DroughtYear <= 2017,]
   # Compute PET and water balance
-  message("Computing PET and Water balance (Precipitation - PET)")
+  if (verbose) log_message("Computing PET and Water balance (Precipitation - PET)")
+
   climate_data[, PET := SPEI::thornthwaite(TAve, unique(.SD$Lat), verbose = FALSE), by = Id]
   climate_data[, BAL := Prec - PET]
 
   # Calculate SPEI
-  message(paste("Calculating SPEI using SPEI:spei() with scale parameter set to", spei_scale))
+
+  if (verbose) log_message(paste("Calculating SPEI using SPEI:spei() with scale parameter set to", spei_scale))
   climate_data <- climate_data[, SPEI := SPEI::spei(BAL, scale = spei_scale, verbose = FALSE, na.rm = TRUE)$fitted, by = Id]
-  # climate_data[, SPEI := spei_result$fitted]
 
   # Replace infinite values in SPEI
-  message("=-=-=-=-=-=- Come back to this. =-=-=-=-=-=-= Replacing infinite values in SPEI by NAs. ")
+  if (verbose) log_message("Replacing infinite values in SPEI by NAs.")
   climate_data[is.infinite(SPEI), SPEI := NA]
 
   # Sort the data to ensure correct rolling computation
   setorder(climate_data, Id, DroughtYear, Year, Month)
 
   # Compute rolling mean for SPEI and TAve, and rolling sum for Prec
-  message(paste("Computing rolling mean for SPEI and TAve and rolling sum for Prec for growth period:", growth_period))
+  if (verbose) log_message(paste("Computing rolling mean for SPEI and TAve and rolling sum for Prec for growth period:", growth_period))
   climate_data[, MeanSPEI := data.table::frollmean(SPEI, n = growth_period,
                                                        align = "right", na.rm = TRUE),
              by = .(Id, DroughtYear)]
@@ -92,7 +95,7 @@ calc_clim_drought_period <- function(clim_data,
   clim_drought_period <- clim_drought_period[DroughtYear >= 1971 & DroughtYear <= 2005,]
 
   if(rescale_spei){
-    message("'rescale_spei = TRUE'. Mean SPEI will be rescaled for the user provided time span. This is what we will use for threhsold drought detection.")
+    if (verbose) log_message("'rescale_spei = TRUE'. Mean SPEI will be rescaled for the user provided time span. This is what we will use for threhsold drought detection.")
     clim_drought_period <- clim_drought_period[, MeanSPEIScaled := scale(MeanSPEI), by = Id]
     col_order <- c("Id", "DroughtYear", "MeanSPEI",  "MeanSPEIScaled", "AHM", "MeanTemp", "TotalPrec")
   }

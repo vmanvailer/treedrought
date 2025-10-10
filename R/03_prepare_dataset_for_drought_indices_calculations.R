@@ -7,9 +7,9 @@
 #' These two years before and after each drought event
 #' for each group/year/drought period. Useful for comparing pre-, during-, and post-drought conditions.
 #'
-#' @param data_with_drought_events A data.table containing columns group_col, Year, DroughtGrouping, DroughtPeriod.
-#' @param data_with_drought_years A data.table containing columns group_col, Year, DroughtGrouping, DroughtPeriod.
-#' @param group_col Character vector with grouping columns (e.g., c("ADMIN_GROUPING", "CLUSTER")).
+#' @param data_with_drought_events A data.table containing columns in `group_col`, `Year`, `DroughtGrouping`, `DroughtPeriod.`
+#' @param data_with_drought_years A data.table containing columns in `group_col`, `Year`, `DroughtGrouping`, `DroughtPeriod.`
+#' @param group_col Character vector with grouping columns (e.g., c("Region", "Cluster")).
 #'
 #' @return A data.table with expanded years and a YEAR_TYPE column.
 prepare_resilience_dataset <- function(data_with_drought_events,

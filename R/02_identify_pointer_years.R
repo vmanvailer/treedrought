@@ -9,7 +9,8 @@ library(data.table)
 # Function to identify drought events at the site level
 identify_drought_events <- function(chron_clim_data,
                                     n_years_baseline = 2,
-                                    n_years_recovery = 2) {
+                                    n_years_recovery = 2,
+                                    verbose = TRUE) {
 
   data_with_drought_events <- copy(chron_clim_data$data_with_calculated_drought_metrics)
   # Ensure data.table format
@@ -22,18 +23,28 @@ identify_drought_events <- function(chron_clim_data,
     data_with_drought_events[, SPEIToUse := MeanSPEI]
   }
 
-  message("-=-=-=-=-=-=-=-= : : : : DEVELOPMENT REMINDER: Add option for user to select whether to use RWI or RES. : : : : =-=-=-=-=-=-=-=-=-")
-  # Compute lags and standard deviations
+  # Create RingToUse column
+  if("RES" %in% names(data_with_drought_events)){
+    if (verbose) log_message("Residual column provided ('RES'). Using it for drought dectection.
+                    \t\tTo use 'RWI' instead simply remove 'RES'")
+    data_with_drought_events[, RingToUse := RES]
+  } else {
+    data_with_drought_events[, RingToUse := RWI]
+  }
+
+  # Scale Residuals
+  data_with_drought_events[, RingToUseScaled := scale(RingToUse), by = Id]
+
+  # Compute lags
   data_with_drought_events[, `:=`(
     SPEIToUseLag1 = shift(SPEIToUse, 1, type = "lag"),
     SPEIToUseLag2 = shift(SPEIToUse, 2, type = "lag"),
-    SPEIToUseLag3 = shift(SPEIToUse, 3, type = "lag"),
-    RESScaled = scale(RES)
+    SPEIToUseLag3 = shift(SPEIToUse, 3, type = "lag")
   ), by = Id]
 
   data_with_drought_events[, `:=`(
-    RESScaledLag1 = shift(RESScaled, 1, type = "lag"),
-    RESScaledLag2 = shift(RESScaled, 2, type = "lag")
+    RingToUseScaledLag1 = shift(RingToUseScaled, 1, type = "lag"),
+    RingToUseScaledLag2 = shift(RingToUseScaled, 2, type = "lag")
   ), by = Id]
 
   # Define threshold values
@@ -46,12 +57,12 @@ identify_drought_events <- function(chron_clim_data,
 
   # Identify drought conditions
   data_with_drought_events[, DroughtImmResp :=
-                    (SPEIToUse < 0 & (SPEIToUse - SPEIToUseLag1) <= threshold_lag1 & (RESScaled - RESScaledLag1) <= threshold_lag1) |
-                    (SPEIToUse < 0 & (SPEIToUse - SPEIToUseLag2) <= threshold_lag2 & ((RESScaled - RESScaledLag1) <= threshold_lag1 | (RESScaled - RESScaledLag2) <= threshold_lag2_grw))]
+                    (SPEIToUse < 0 & (SPEIToUse - SPEIToUseLag1) <= threshold_lag1 & (RingToUseScaled - RingToUseScaledLag1) <= threshold_lag1) |
+                    (SPEIToUse < 0 & (SPEIToUse - SPEIToUseLag2) <= threshold_lag2 & ((RingToUseScaled - RingToUseScaledLag1) <= threshold_lag1 | (RingToUseScaled - RingToUseScaledLag2) <= threshold_lag2_grw))]
 
   data_with_drought_events[, DroughtDelResp :=
-                           (SPEIToUseLag1 < 0 & (SPEIToUseLag1 - SPEIToUseLag2) <= threshold_lag1 & (RESScaled - RESScaledLag1) <= threshold_lag1) |
-   (!is.na(SPEIToUseLag3) & SPEIToUseLag1 < 0 & (SPEIToUseLag1 - SPEIToUseLag3) <= threshold_lag2 & ((RESScaled - RESScaledLag1) <= threshold_lag1 | (RESScaled - RESScaledLag2) <= threshold_lag2_grw))]
+                           (SPEIToUseLag1 < 0 & (SPEIToUseLag1 - SPEIToUseLag2) <= threshold_lag1 & (RingToUseScaled - RingToUseScaledLag1) <= threshold_lag1) |
+   (!is.na(SPEIToUseLag3) & SPEIToUseLag1 < 0 & (SPEIToUseLag1 - SPEIToUseLag3) <= threshold_lag2 & ((RingToUseScaled - RingToUseScaledLag1) <= threshold_lag1 | (RingToUseScaled - RingToUseScaledLag2) <= threshold_lag2_grw))]
 
   return(data_with_drought_events)
 }
@@ -64,7 +75,8 @@ identify_drought_years <- function(data_with_drought_events,
                                    group_col = NULL,
                                    n_years_recovery = 2,
                                    thr_pointer_year_prop_sites = 0.3,
-                                   thr_multi_drought_tiebreak = 0.65) {
+                                   thr_multi_drought_tiebreak = 0.65,
+                                   verbose = TRUE) {
   # Ensure data.table format
   data.table::setDT(data_with_drought_events)
 
@@ -135,15 +147,19 @@ identify_drought_years <- function(data_with_drought_events,
   no_rec_data <- drought_years[NoRecovery == FALSE, ..cols]
   drought_years <- drought_years[!no_rec_data, on = cols] # Keep only droughts that have recovery period.
 
-    # Remove drought years that have less than three records
+  # Remove drought years that have less than three records
   # In order to fit a negative exponential model, must have at least three records
   message("-=-=-=-=-=-=-=-= : : : : TEMPORARYLY DEACTIVATED STEP: To allow QAQC of drought events moving forward. : : : : =-=-=-=-=-=-=-=-=-")
   # drought_years <- drought_years[, .SD[.N >= 3] , by = c(mget(group_col))]
 
   report <- drought_years[,.(NDrought = .N), keyby = group_col]
-  message("Below is the summary of droughts per group:\n\n\t")
+  if (verbose) log_message("Below is the summary of droughts per group:\n\n\t")
   print(report)
-  message("DEVELOPER REMINDER: Include details on removed droughts on the report and reason for it.")
+  if (verbose) log_message("IN DEVELOPMENT: Future versions will include details of removed droughts on the report and the reason for removal it.")
+  #types
+  ## Below threshold of minimum number of sites per group.
+  ## Less than 3 droughts for the group.
+  ## No recovery period or pre-period.
 
   return(drought_years)
 }
