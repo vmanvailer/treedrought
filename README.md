@@ -1,4 +1,4 @@
-# TreeDrought – Main Branch
+# TreeDrought
 
 ## Overview
 
