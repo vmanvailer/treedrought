@@ -17,7 +17,8 @@ std_drought_impact(
   n_years_baseline = 2,
   n_years_recovery = 2,
   model_min_n_drought_events = 3,
-  model_resistance_val = 0.5
+  model_resistance_val = 0.5,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -46,10 +47,10 @@ Important: Only TRUE allowed. Future development will include ability to change
 thresholds for drought detection e.g. \code{thr_drought_detect_spei} and \code{thr_drought_detect_ring}
 (not implemented yet but currently set to 1 SD for both).}
 
-\item{thr_pointer_year_prop_sites}{Numeric in \link{0,1}; minimum proportion of sites in a group
+\item{thr_pointer_year_prop_sites}{Numeric in (0,1); minimum proportion of sites in a group
 required to flag a pointer (drought) year (default 0.3).}
 
-\item{thr_multi_drought_tiebreak}{Numeric in \link{0,1}; proportion threshold for resolving
+\item{thr_multi_drought_tiebreak}{Numeric in (0,1); proportion threshold for resolving
 mixed “immediate” vs “delayed” drought responses (default 0.65).}
 
 \item{n_years_baseline}{Integer number of pre-drought years to include (default 2).}
@@ -59,6 +60,8 @@ mixed “immediate” vs “delayed” drought responses (default 0.65).}
 \item{model_min_n_drought_events}{Integer minimum distinct drought events per group to fit the recovery model (default 3).}
 
 \item{model_resistance_val}{Numeric resistance value at which to compare modeled recovery vs full resilience (default 0.5).}
+
+\item{verbose}{Logical outputs messages in the console and in a log file to current directory.}
 }
 \value{
 A named list with two elements:

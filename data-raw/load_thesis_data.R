@@ -1,5 +1,4 @@
 load_thesis_data <- function(tree_ring_data_source = c("Detrended", "Detrended imputed")){
-  library(data.table)
   path_data_root <- "H:/My Drive/Work/1_PhD/2_Chapter 4 - Drought analysis"
   # --- Climate -------------------------------------
   path_climate_udel <- file.path(path_data_root, "03. Filtering climate data", "03. UDEL_filter4.Rds")
@@ -40,18 +39,16 @@ load_thesis_data <- function(tree_ring_data_source = c("Detrended", "Detrended i
   thesis_clusters_b <- fread(file = file.path(path_data_root, "18. Renumber clusters - Visualizing admin grouping world/color_cluster3df_named.csv"))
   thesis_clusters <- thesis_clusters_a[thesis_clusters_b, on = "CLUSTER2"]
   thesis_clusters <- merge(thesis_group_admin, thesis_clusters, by = "FILE_CODE", all.x = TRUE)
-  data.table::setnames(thesis_clusters, old = c("FILE_CODE"), new = c("Id"))
-  thesis_clusters[,group_col := paste(ADMIN_GROUPING, CLUSTER2, sep = "_")]
-  thesis_clusters[,`:=` (ADMIN_GROUPING = NULL,
-                         CLUSTER = NULL)]
+  setnames(thesis_clusters, old = c("FILE_CODE", "ADMIN_GROUPING"), new = c("Id", "Continent"))
+  setcolorder(thesis_clusters, c("Id", "Continent", "name", "CLUSTER", "CLUSTER2", "CLUSTER3", "CLUSTER3_STATUS"))
 
   # --- Chronology Metadata -------------------------
-  chron_itrdb_meta <- fread(file.path(path_data_root, "00. Base files/Tree Rings/3_Metadata_for_raw_and_chronology_data_files.csv"))
+  chron_itrdb_meta <- fread(file.path(path_data_root, "00. Base files/Tree Rings/3_Metadata_for_raw_and_chronology_data_files.csv"), encoding = "Latin-1")
   setnames(chron_itrdb_meta, old = c("FILE_CODE"), new = c("Id"))
 
   # --- Sensitivity analysis data -------------------
-  thesis_sens_filter   <- fread(file.path(path_data_root, "16. sensitivity filter.csv"))
-
+  thesis_sens_filter   <- fread(file.path(path_data_root, "16. sensitivity filter.csv"))[,c("FILE_CODE")]
+  setnames(thesis_sens_filter, "FILE_CODE", "Id")
   ## --- Final datasets produced --------------------
   thesis_data <- list(climate_udel_dt = climate_udel_dt,
                       chron_itrdb_dt = chron_itrdb_dt,

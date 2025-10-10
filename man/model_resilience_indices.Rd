@@ -8,7 +8,8 @@ model_resilience_indices(
   calculated_indices,
   chron_group_col,
   model_min_n_drought_events = 3,
-  model_resistance_val = 0.5
+  model_resistance_val = 0.5,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ model_resilience_indices(
 \item{model_min_n_drought_events}{Minimum number of drought events per group to fit model.}
 
 \item{model_resistance_val}{Resistance value to anchor full resilience reference line.}
+
+\item{verbose}{Logical outputs messages in the console and in a log file to current directory.}
 }
 \value{
 A data.table with model results, bootstrap CIs, intersection assessments, and classification.

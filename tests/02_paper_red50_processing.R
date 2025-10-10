@@ -4,13 +4,12 @@ library(data.table)
 std_results <- readRDS("tests/std_results.rds")
 
 # Metadata
-std_drought_meta <- fread("inst/extdata/chronologies_itrdb_metadata.csv")
-std_drought_sens <- fread("inst/extdata/sensitivity_filter.csv")
+data(std_drought_meta,
+     std_drought_sens)
 
-# --- Results Processing -------------------------------------------------------
+# ----- Results Processing -------------------------------------------------------
 
-## -- Get Lloret indices, AHM and Species info for plotting
-
+## ---- Get Lloret indices, AHM and Species info for plotting
 ### --- Fig. 3 | Lloret Indices
 cal_indices <- std_results$intermediate_steps$calculated_indices |>
   dcast(Id + DroughtPeriod ~ Indices , value.var = "Value")
@@ -36,7 +35,7 @@ predicted_recovery <- predicted_recovery |>
   merge(cal_indices)
 
 
-# --- Filter and ordering ------------------------------------------------------
+# ----- Filter and ordering ------------------------------------------------------
 
 std_proj_recov_f <- predicted_recovery[!Id %in% std_drought_sens$FILE_CODE &                       # Sites that were too sensitive to parameter changes are unreliable.
                                          RED50Mean <= 2 &                                                # Sites that had growth twice as better their regular growth are likely not captured correctly.
@@ -49,10 +48,11 @@ std_proj_recov_f <- predicted_recovery[!Id %in% std_drought_sens$FILE_CODE &    
 ][, .SD[.N >= 6], by = .(name, CLUSTER2, CLUSTER3, Species)]                                       # Only species x region with more than 6 sites in them.
 
 # Ordering facets
-facet_summ <- std_proj_recov_f[, .(mean_RED50Mean = mean(RED5050Mean, na.rm = TRUE)), by = .(name, Species)]
+facet_summ <- std_proj_recov_f[, .(mean_RED50Mean = mean(RED50Mean, na.rm = TRUE)), by = .(name, Species)]
 facet_order <- facet_summ[, .(facet_mean = mean(mean_RED50Mean)), by = name][order(-facet_mean)]$name
 std_proj_recov_f[, name := factor(name, levels = facet_order)]
 
 # Write out processed results and AHM
+if(!dir.exists("tests")) dir.create("tests")
 saveRDS(std_proj_recov_f, "tests/std_proj_recov_f.rds", compress = "xz")
 saveRDS(ahm_mean, "tests/ahm_mean.rds", compress = "xz")

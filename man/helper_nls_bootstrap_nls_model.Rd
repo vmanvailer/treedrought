@@ -11,13 +11,26 @@ helper_nls_bootstrap_nls_model(
   id,
   idx,
   total,
-  start_time
+  start_time,
+  verbose = TRUE
 )
 }
 \arguments{
 \item{model}{A fitted \code{nls} object.}
 
 \item{data}{The original dataset used to fit the model.}
+
+\item{id}{Character File id to be processed.}
+
+\item{idx}{Character Index of File id to be processed.}
+
+\item{total}{POSIXct of the start time of the function.}
+
+\item{start_time}{POSIXct of the start time of the file id to be processed.}
+
+\item{verbose}{Logical outputs messages in the console and in a log file to current directory.}
+
+\item{model_successfull}{Logical indicates whether and nls converged.}
 }
 \value{
 A bootstrapped \code{nlsBoot} object or NA if error.

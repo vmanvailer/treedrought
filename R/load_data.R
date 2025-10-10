@@ -18,6 +18,7 @@
 #'     \item \code{chron_itrdb_dt} — tree-ring chronology dataset
 #'     \item \code{chron_itrdb_meta} — metadata table
 #'     \item \code{thesis_clusters} — cluster assignments
+#'     \item \code{thesis_sens_filter} — Id for files to be excluded based on sensitive analysis
 #'   }
 #' @examples
 #' \dontrun{

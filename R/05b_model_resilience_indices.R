@@ -8,6 +8,7 @@
 #' @param chron_group_col Character vector of grouping columns, e.g., "Continent", "Region", "Cluster".
 #' @param model_min_n_drought_events Minimum number of drought events per group to fit model.
 #' @param model_resistance_val Resistance value to anchor full resilience reference line.
+#' @param verbose               Logical outputs messages in the console and in a log file to current directory.
 #'
 #' @return A data.table with model results, bootstrap CIs, intersection assessments, and classification.
 model_resilience_indices <- function(calculated_indices,

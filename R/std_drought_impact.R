@@ -14,10 +14,10 @@
 #' @param chron_data            data.table or data.frame of tree-ring data.
 #'                              Must contain columns `Id`, `Year`, and either `RWI` or `RES`.
 #' @param chron_group_col       Character vector naming the column(s) to group sites for regional drought detection
-#'                              (e.g. \"Region\", \"Cluster\"). Site level droughts are detected at the Id level
-#'                              and then used to defined group level drought years based on common patterns; if NULL,
-#'                              all sites are treated as one group.
-#' @param clim_data             data.table or data.frame of climate series.  Must contain `Id`, `Lat`, `Year`, `Month`, `TAve`, `Prec`.
+#'                              (e.g. "Region", "Cluster"). Site level droughts are detected at the Id level
+#'                              and then used to defined group level drought years based on common patterns across
+#'                              all grouped Ids; if NULL, all Ids are treated as one group.
+#' @param clim_data             data.table or data.frame of climate series.  Must contain `Id`, `Lat` (for SPEI calculation), `Year`, `Month`, `TAve`, `Prec`.
 #' @param clim_growth_end       Named numeric vector c(NH=8, SH=2) indicating the final month of the growth year
 #'                              in each hemisphere (default 8=Aug for NH, 2=Feb for SH).
 #' @param clim_growth_period    Integer length of the growth year in months (default 12). Used for aggregating monthly
@@ -29,9 +29,9 @@
 #'                              Important: Only TRUE allowed. Future development will include ability to change
 #'                              thresholds for drought detection e.g. `thr_drought_detect_spei` and `thr_drought_detect_ring`
 #'                              (not implemented yet but currently set to 1 SD for both).
-#' @param thr_pointer_year_prop_sites Numeric in [0,1]; minimum proportion of sites in a group
+#' @param thr_pointer_year_prop_sites Numeric in (0,1); minimum proportion of sites in a group
 #'                              required to flag a pointer (drought) year (default 0.3).
-#' @param thr_multi_drought_tiebreak Numeric in [0,1]; proportion threshold for resolving
+#' @param thr_multi_drought_tiebreak Numeric in (0,1); proportion threshold for resolving
 #'                              mixed “immediate” vs “delayed” drought responses (default 0.65).
 #' @param n_years_baseline      Integer number of pre-drought years to include (default 2).
 #' @param n_years_recovery      Integer number of post-drought years to include (default 2).
@@ -79,7 +79,6 @@ std_drought_impact <- function(
 ){
 
   conflicted::conflicts_prefer(data.table::`:=`)
-  library(data.table)
 
   # Validate chronology data columns.
   # Must have Id and Year, and at least one of RWI or RES.

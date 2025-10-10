@@ -4,9 +4,11 @@
 #' It also computes PET, water balance, and SPEI.
 #'
 #' @param clim_data A data.table containing climate data with columns: Id (e.g. can001), Year, Month, TAve, Prec, Lat (latitude).
-#' @param spei_scale Numeric, the scale at which SPEI is calculated (default = 1 month). Refer to the time scale over which water deficit accumulates. A value of 3 indicates that the SPEI for March is based on the accumulated water deficit over January, February and March.
-#' @param growth_end Numeric, the month when growth is thought to have stopped (default = `8` for Northern Hemisphere and `2` for Southern Hemisphere).
 #' @param growth_period Numeric, the number of months prior to `growth_end` that are thought to have influence growth. Will be used to average climate conditions for that period. E.g. if northern hemisphere summer (Jun, Jul and Aug) is the interest of investigation then this value would be 3 with `growth_end = 8` (for August)
+#' @param growth_end Numeric, the month when growth is thought to have stopped (default = `8` for Northern Hemisphere and `2` for Southern Hemisphere).
+#' @param spei_scale Numeric, the scale at which SPEI is calculated (default = 1 month). Refer to the time scale over which water deficit accumulates. A value of 3 indicates that the SPEI for March is based on the accumulated water deficit over January, February and March.
+#' @param rescale_spei Logical, whether to rescale SPEI averaged for the `growth_period`.
+#' @param verbose Logical. If TRUE (default), prints a summary of missing
 #'
 #' @return A data.table with adjusted climate data, including calculated drought years, PET, water balance, and SPEI.
 #'
@@ -20,9 +22,6 @@ calc_clim_drought_period <- function(clim_data,
                                      rescale_spei = TRUE,
                                      verbose = TRUE
 ) {
-  library(data.table)
-  library(SPEI)
-
   # Convert to data.table if not already
   setDT(clim_data)
   climate_data <- copy(clim_data)

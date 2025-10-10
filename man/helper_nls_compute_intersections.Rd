@@ -8,6 +8,8 @@ helper_nls_compute_intersections(ci_data, model_successful)
 }
 \arguments{
 \item{ci_data}{A data.table with CI bands and full resilience values.}
+
+\item{model_successfull}{Logical indicates whether and nls converged.}
 }
 \value{
 A list with intersection types and threshold Resistance values.

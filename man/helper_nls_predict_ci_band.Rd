@@ -12,7 +12,8 @@ helper_nls_predict_ci_band(
   id,
   idx,
   total,
-  start_time
+  start_time,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -21,6 +22,18 @@ helper_nls_predict_ci_band(
 \item{nls_boot}{A \code{nlsBoot} object (bootstrapped model).}
 
 \item{data}{A data.table with a numeric column \code{Resistance}.}
+
+\item{id}{Character File id to be processed.}
+
+\item{idx}{Character Index of File id to be processed.}
+
+\item{total}{POSIXct of the start time of the function.}
+
+\item{start_time}{POSIXct of the start time of the file id to be processed.}
+
+\item{verbose}{Logical outputs messages in the console and in a log file to current directory.}
+
+\item{model_successfull}{Logical indicates whether and nls converged.}
 }
 \value{
 A data.table with Resistance, median_ci, lwr_ci, upr_ci, fit_sp_ci, and full_res.

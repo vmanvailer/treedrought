@@ -7,7 +7,7 @@
 #'   - `"Id"`: Unique identifier for each site.
 #'   - `"Year"`: Year of measurement.
 #'   - At least one of `"RWI"` (Ring Width Index) or `"RES"` (Residual chronology from an autoregressive modelling).
-#'
+#' @param verbose Logical. Whether to display progress messages (default = TRUE).
 #' @return A `data.table` with missing values imputed using Random Forest.
 #'
 #' @details
@@ -31,7 +31,7 @@
 #' @importFrom randomForest rfImpute
 #'
 #' @export
-impute_chronology_data <- function(chron_data) {
+impute_chronology_data <- function(chron_data, verbose = TRUE) {
   # Ensure data.table format
   data.table::setDT(chron_data)
 

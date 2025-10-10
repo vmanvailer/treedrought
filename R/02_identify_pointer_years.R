@@ -1,12 +1,53 @@
-library(data.table)
-
-# This function runs for every line (year or group/year combination) in the dataset.
-# It creates two columns:
-  # "DroughtImmResp" flags whether there was a decrease in both growth and SPEI in a given year that is larger than -1 SD when compared to the previous year.
-  # "DroughtDelResp" flags whether there was a decrease in both growth and SPEI in a given year that is larger than -1.5 SD when compared to the two year before.
-
-
-# Function to identify drought events at the site level
+#' Identify drought events within a site or chronology
+#'
+#' This function flags years within each site (or tree) where both the
+#' standardized precipitation–evapotranspiration index (SPEI) and
+#' tree growth (ring-width residuals or raw index) decrease below
+#' defined thresholds. Two types of drought responses are detected:
+#' \itemize{
+#'   \item \strong{Immediate response} (`DroughtImmResp`): growth and SPEI drop
+#'     more than one standard deviation compared to the previous year.
+#'   \item \strong{Delayed response} (`DroughtDelResp`): growth and SPEI drop
+#'     more than 1.5 standard deviations compared to two years prior.
+#' }
+#'
+#' The function adds these drought flags to the input dataset, along with
+#' scaled and lagged versions of SPEI and growth variables.
+#'
+#' @param chron_clim_data A list returned by \code{\link{merge_climate_growth_data}}
+#'   containing the element \code{$data_with_calculated_drought_metrics}, which
+#'   includes columns \code{Id}, \code{Year}, \code{MeanSPEI}, and either
+#'   \code{RES} (residuals) or \code{RWI} (raw ring-width index).
+#' @param n_years_baseline Integer. Number of years before a drought event used
+#'   for baseline growth (default = 2).
+#' @param n_years_recovery Integer. Number of years after a drought event used
+#'   for recovery analysis (default = 2).
+#' @param verbose Logical. Whether to display progress messages (default = TRUE).
+#'
+#' @details
+#' The function automatically chooses between residuals (`RES`) or raw index (`RWI`)
+#' for drought detection. All growth values are scaled by site (`Id`).
+#'
+#' Thresholds used:
+#' \itemize{
+#'   \item Immediate response: –1 SD for both SPEI and growth.
+#'   \item Delayed response: –1.5 SD for SPEI and –2 SD for growth.
+#' }
+#'
+#' @return A \code{data.table} containing the original variables plus new columns:
+#' \describe{
+#'   \item{SPEIToUse}{The standardized SPEI series used.}
+#'   \item{RingToUseScaled}{The scaled ring-width or residual series.}
+#'   \item{DroughtImmResp}{Logical; TRUE if an immediate drought response is detected.}
+#'   \item{DroughtDelResp}{Logical; TRUE if a delayed drought response is detected.}
+#' }
+#'
+#' @seealso
+#' \code{\link{identify_drought_years}}, which aggregates site-level
+#' drought events to the group level.
+#'
+#' @importFrom data.table setDT copy shift :=
+#' @export
 identify_drought_events <- function(chron_clim_data,
                                     n_years_baseline = 2,
                                     n_years_recovery = 2,
@@ -67,10 +108,44 @@ identify_drought_events <- function(chron_clim_data,
   return(data_with_drought_events)
 }
 
-# Since each site (or tree, if applying this algorithm at tree level) may detect different
-# drought years, we aggregate the responses to identify whether sites in a given region (group_col)
-# agree in the identified drought event. We use proportion of sites that identified the same drought year (thr_pointer_year_prop_sites).
-# If higher than the threshold then we flag as a group drought.
+#' Identify group-level drought years
+#'
+#' Aggregates site-level drought flags (from \code{\link{identify_drought_events}})
+#' into group-level drought years based on the proportion of sites within each group
+#' that exhibit a drought response.
+#'
+#' @param data_with_drought_events A \code{data.table} produced by
+#'   \code{\link{identify_drought_events}}.
+#' @param group_col Character string or vector. Column(s) defining site groups
+#'   (e.g., administrative region, species cluster).
+#' @param n_years_recovery Integer. Minimum number of post-drought years required
+#'   for recovery (default = 2).
+#' @param thr_pointer_year_prop_sites Numeric. Proportion of sites within a group
+#'   required to define a drought year (default = 0.3).
+#' @param thr_multi_drought_tiebreak Numeric. Threshold for deciding whether a
+#'   drought is multi-year versus dominated by immediate or delayed responses (default = 0.65).
+#' @param verbose Logical. Whether to print summary messages (default = TRUE).
+#'
+#' @details
+#' This function harmonizes site-level drought events that may occur in
+#' different years (immediate vs. delayed) and determines whether each
+#' group experienced a synchronized drought year.
+#'
+#' A group drought year is identified when more than
+#' \code{thr_pointer_year_prop_sites} (e.g., 30%) of sites exhibit a
+#' drought response.
+#'
+#' @return A \code{data.table} summarizing group-level drought events,
+#' including:
+#' \describe{
+#'   \item{DroughtAnyRespProp}{Proportion of sites within group with a drought.}
+#'   \item{IsMultiYearDrought}{Logical indicating whether the drought spans multiple years.}
+#'   \item{DelRespMaj}{Logical; TRUE if delayed responses dominate.}
+#'   \item{DroughtPeriod}{Character label for grouped drought years.}
+#' }
+#'
+#' @seealso \code{\link{identify_drought_events}}
+#' @export
 identify_drought_years <- function(data_with_drought_events,
                                    group_col = NULL,
                                    n_years_recovery = 2,

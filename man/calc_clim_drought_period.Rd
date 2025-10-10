@@ -9,7 +9,8 @@ calc_clim_drought_period(
   growth_period = 12,
   growth_end = c(NH = 8, SH = 2),
   spei_scale = 1,
-  rescale_spei = TRUE
+  rescale_spei = TRUE,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -20,6 +21,10 @@ calc_clim_drought_period(
 \item{growth_end}{Numeric, the month when growth is thought to have stopped (default = \code{8} for Northern Hemisphere and \code{2} for Southern Hemisphere).}
 
 \item{spei_scale}{Numeric, the scale at which SPEI is calculated (default = 1 month). Refer to the time scale over which water deficit accumulates. A value of 3 indicates that the SPEI for March is based on the accumulated water deficit over January, February and March.}
+
+\item{rescale_spei}{Logical, whether to rescale SPEI averaged for the \code{growth_period}.}
+
+\item{verbose}{Logical. If TRUE (default), prints a summary of missing}
 }
 \value{
 A data.table with adjusted climate data, including calculated drought years, PET, water balance, and SPEI.

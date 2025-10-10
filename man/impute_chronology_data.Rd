@@ -4,7 +4,7 @@
 \alias{impute_chronology_data}
 \title{Impute Missing Tree-Ring Chronology Data}
 \usage{
-impute_chronology_data(chron_data)
+impute_chronology_data(chron_data, verbose = TRUE)
 }
 \arguments{
 \item{chron_data}{A \code{data.frame} (or \code{data.table}) containing tree-ring chronology data with the following required columns:
@@ -13,6 +13,8 @@ impute_chronology_data(chron_data)
 \item \code{"Year"}: Year of measurement.
 \item At least one of \code{"RWI"} (Ring Width Index) or \code{"RES"} (Residual chronology from an autoregressive modelling).
 }}
+
+\item{verbose}{Logical. Whether to display progress messages (default = TRUE).}
 }
 \value{
 A \code{data.table} with missing values imputed using Random Forest.

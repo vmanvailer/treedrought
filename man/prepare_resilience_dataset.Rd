@@ -14,11 +14,17 @@ prepare_resilience_dataset(
 )
 }
 \arguments{
-\item{data_with_drought_events}{A data.table containing columns group_col, Year, DroughtGrouping, DroughtPeriod.}
+\item{data_with_drought_events}{A data.table containing columns in \code{group_col}, \code{Year}, \code{DroughtGrouping}, \code{DroughtPeriod.}}
 
-\item{data_with_drought_years}{A data.table containing columns group_col, Year, DroughtGrouping, DroughtPeriod.}
+\item{data_with_drought_years}{A data.table containing columns in \code{group_col}, \code{Year}, \code{DroughtGrouping}, \code{DroughtPeriod.}}
 
-\item{group_col}{Character vector with grouping columns (e.g., c("ADMIN_GROUPING", "CLUSTER")).}
+\item{group_col}{Character vector with grouping columns (e.g., c("Region", "Cluster")).}
+
+\item{n_years_baseline}{Integer. Number of years before a drought event used
+for baseline growth (default = 2).}
+
+\item{n_years_recovery}{Integer. Number of years after a drought event used
+for recovery analysis (default = 2).}
 }
 \value{
 A data.table with expanded years and a YEAR_TYPE column.

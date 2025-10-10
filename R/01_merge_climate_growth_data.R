@@ -1,3 +1,52 @@
+#' Merge climate and growth data by site and year
+#'
+#' This function merges a climate dataset (typically including yearly SPEI,
+#' temperature, and precipitation) with a tree-ring chronology dataset
+#' (ring width or residuals) based on matching `Id` and `Year` values.
+#' It produces a combined table used for drought-event detection and
+#' reports any missing years in either dataset.
+#'
+#' @param chron_data A data frame or data.table containing tree-ring data
+#'   with columns \code{Id} (site or chronology ID) and \code{Year}.
+#' @param clim_drought_period A data frame or data.table containing climate
+#'   metrics, including \code{Id} and \code{DroughtYear}, which will be renamed
+#'   to \code{Year} for merging.
+#' @param verbose Logical. If TRUE (default), prints a summary of missing
+#'   climate or chronology years.
+#'
+#' @details
+#' Both inputs are coerced to \code{data.table} format internally.
+#' The function performs an inner join by \code{Id} and \code{Year} to ensure
+#' that only matching site–year records are retained. A missing data report is
+#' generated to identify which years are absent in each dataset.
+#'
+#' @return A list with two elements:
+#' \describe{
+#'   \item{\code{data_with_calculated_drought_metrics}}{
+#'     A \code{data.table} containing merged climate and growth data by \code{Id} and \code{Year}.}
+#'   \item{\code{missing_report}}{
+#'     A summary table listing \code{YearsMissingClim} and \code{YearsMissingChron} for each \code{Id}.
+#'     If all records match perfectly, returns a message string instead.}
+#' }
+#'
+#' @examples
+#' \dontrun{
+#' chron <- data.table::data.table(Id = c("ak001","ak001","ak002"),
+#'                                 Year = c(2000,2001,2000),
+#'                                 RWI = c(1.2, 0.9, 1.0))
+#'
+#' clim  <- data.table::data.table(Id = c("ak001","ak001","ak002"),
+#'                                 DroughtYear = c(2000,2001,2000),
+#'                                 SPEI = c(-0.5, -1.1, 0.3))
+#'
+#' merged <- merge_climate_growth_data(chron, clim)
+#' str(merged)
+#' }
+#'
+#' @seealso \code{\link{identify_drought_events}}
+#'
+#' @importFrom data.table setDT setnames setcolorder copy shift :=
+#' @export
 merge_climate_growth_data <- function(chron_data,
                                       clim_drought_period,
                                       verbose = TRUE) {
@@ -46,10 +95,14 @@ merge_climate_growth_data <- function(chron_data,
   n_ids_missing_chron <- nrow(missing_report[YearsMissingChron != ""])
 
   if (verbose) log_message("Merge Report:\n")
-  if (verbose) log_message(paste0("  Number of Ids with missing climate data: %d\n", n_ids_missing_clim))
-  if (verbose) log_message(paste0("  Number of Ids with missing chronology data: %d\n", n_ids_missing_chron))
+  if (verbose) log_message(paste0(sprintf("  Number of Ids with missing climate data: %d\n", n_ids_missing_clim)))
+  if (verbose) log_message(paste0(sprintf("  Number of Ids with missing chronology data: %d\n", n_ids_missing_chron)))
 
   # Return the merged data and the missing data report
-  return(list(data_with_calculated_drought_metrics = merged_data,
-              missing_report = if(nrow(missing_report) == 0) "All 'Ids' and 'Years' match between climate data and chronology data." else missing_report))
+  return(list(
+    data_with_calculated_drought_metrics = merged_data,
+    missing_report = if(nrow(missing_report) == 0)
+      "All 'Ids' and 'Years' match between climate data and chronology data."
+    else missing_report
+  ))
 }

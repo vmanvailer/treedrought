@@ -7,8 +7,11 @@ Authors@R:
 Description: Uses tree ring data and monthly climate data to identify ecologically defined drought events, calculate resilience indices and model a standardized recovery capacity of trees/sites.
 Depends: 
     data.table,
-    R (>= 2.10),
-    SPEI
+    SPEI,
+    conflicted,
+    randomForest,
+    nlstools,
+    R (>= 3.50)
 License: None
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

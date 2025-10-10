@@ -11,6 +11,9 @@ helper_nls_full_res <- function(Resistance) {
 #' @description Fits a negative exponential model: Recovery ~ z * Resistance^b.
 #' @param data A data.table or data.frame with columns Resistance and Recovery.
 #' @return A fitted `nls` model object or a character message if error.
+#' @importFrom data.table data.table :=
+#' @importFrom stats nls nls.control predict
+#' @importFrom nlstools nlsBoot nlsBootPredict
 #' @export
 helper_nls_fit_recovery_model <- function(data) {
   tryCatch({
@@ -27,9 +30,16 @@ helper_nls_fit_recovery_model <- function(data) {
 
 #' @title Bootstrap NLS Model
 #' @description Bootstraps a fitted `nls` model using `nlstools::nlsBoot`.
+#' @param model_successfull Logical indicates whether and nls converged.
 #' @param model A fitted `nls` object.
 #' @param data The original dataset used to fit the model.
+#' @param id Character File id to be processed.
+#' @param idx Character Index of File id to be processed.
+#' @param total POSIXct of the start time of the function.
+#' @param start_time POSIXct of the start time of the file id to be processed.
+#' @param verbose Logical outputs messages in the console and in a log file to current directory.
 #' @return A bootstrapped `nlsBoot` object or NA if error.
+#' @importFrom nlstools nlsBoot
 #' @export
 helper_nls_bootstrap_nls_model <- function(model_successful, model, data, id, idx, total, start_time, verbose = TRUE) {
   tryCatch({
@@ -73,10 +83,19 @@ helper_nls_bootstrap_nls_model <- function(model_successful, model, data, id, id
 #' @title Predict Confidence Bands (Revised)
 #' @description Predicts median, lower, and upper CI bands using nlsBoot,
 #' automatically deriving the resistance range from the supplied data.
-#' @param nls_boot A `nlsBoot` object (bootstrapped model).
+#' @param model_successfull Logical indicates whether and nls converged.
 #' @param model   A fitted `nls` model object.
+#' @param nls_boot A `nlsBoot` object (bootstrapped model).
 #' @param data    A data.table with a numeric column `Resistance`.
+#' @param id Character File id to be processed.
+#' @param idx Character Index of File id to be processed.
+#' @param total POSIXct of the start time of the function.
+#' @param start_time POSIXct of the start time of the file id to be processed.
+#' @param verbose Logical outputs messages in the console and in a log file to current directory.
 #' @return A data.table with Resistance, median_ci, lwr_ci, upr_ci, fit_sp_ci, and full_res.
+#' @importFrom data.table data.table :=
+#' @importFrom nlstools nlsBootPredict
+#' @importFrom stats predict
 #' @export
 helper_nls_predict_ci_band <- function(model_successful, model, nls_boot, data, id, idx, total, start_time,
                                        verbose = TRUE) {
@@ -133,6 +152,7 @@ helper_nls_predict_ci_band <- function(model_successful, model, nls_boot, data, 
 #' @title Compute Intersection with Full Resilience
 #' @description Computes where model CI intersects full resilience line.
 #' @param ci_data A data.table with CI bands and full resilience values.
+#' @param model_successfull Logical indicates whether and nls converged.
 #' @return A list with intersection types and threshold Resistance values.
 #' @export
 helper_nls_compute_intersections <- function(ci_data, model_successful) {

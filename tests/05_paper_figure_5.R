@@ -4,6 +4,11 @@ library(tidytext)
 
 std_proj_recov_f <- readRDS("tests/std_proj_recov_f.rds")
 
+# Colors
+data(std_drought_clus)
+clusters3 <- unique(std_drought_clus[CLUSTER3_STATUS == "Included"])
+clusters3 <- clusters3[!is.na(name)]
+colors_clusters <- setNames(clusters3$COLOR, clusters3$name)
 
 # --- Plot - by Spp --------------------
 
@@ -21,12 +26,11 @@ std_proj_recov_f[, if (uniqueN(name) >= 2) .SD, by = Species] |> #Filter only re
   stat_summary(geom = "errorbarh", fun.data = mean_se, linewidth = 0.7, height = 0.5) +
   stat_summary(geom = "point", fun = mean) +
   # Panels by species
-  facet_grid(Species ~., scales = "free",) +
+  facet_grid(Species ~., scales = "free", space = "free") +
   # Styling
   scale_x_continuous(breaks =  seq(-1, 2, by = 0.2)) +
   tidytext::scale_y_reordered() +    # necessary to clean up labels
-  # scale_color_manual(values = color_cluster2,
-  #                    name = "Cluster") +
+  scale_color_manual(values = colors_clusters) +
   labs(fill = "Cluster",
        x = paste0("Projected recovered growth at ", 0.5," Resistance"),
        y = "") +
