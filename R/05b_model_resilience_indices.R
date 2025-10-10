@@ -22,10 +22,6 @@ model_resilience_indices <- function(calculated_indices,
   form <- formula(paste0("Id + ", paste(chron_group_col, collapse = " + ")," + DroughtPeriod + RRRClass ~ Indices"))
   calculated_indices_wide <- dcast(calculated_indices, form, value.var = "Value")
 
-  message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Removing droughts with recovery > 100 due to convergence issues. : : : : =-=-=-=-=-=-=-=-=-")
-  # from script 13. RRR nls - negative exponential modelling line #56.
-  calculated_indices_wide <- calculated_indices_wide[Recovery < 100]
-
   # Add full resilience fit and residuals for comparison
   calculated_indices_wide[, FullRecoveryFitted := helper_nls_full_res(Resistance)]
   calculated_indices_wide[, FullRecoveryResiduals := Recovery - FullRecoveryFitted]

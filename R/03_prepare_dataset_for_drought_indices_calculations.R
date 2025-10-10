@@ -23,43 +23,6 @@ prepare_resilience_dataset <- function(data_with_drought_events,
                                        n_years_recovery = 2){
   setDT(data_with_drought_years)
 
-  # <MANUAL THESIS STEPS> <START>
-  message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Removing drought years from 2003+. Excluded 2003 specifically by mistake ref qaqc-04: : : : =-=-=-=-=-=-=-=-=-")
-  data_with_drought_years <- data_with_drought_years[Year < 2003]
-  # <MANUAL THESIS STEPS> <END>
-
-  # <MANUAL THESIS STEPS> <START>
-  # 1 - Removal of drought events from visually inspecting them.
-  message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Removing inconsistent droughts from visual inspections : : : : =-=-=-=-=-=-=-=-=-")
-  path_data_root <- "H:/My Drive/Work/1_PhD/2_Chapter 4 - Drought analysis/"
-  drght_list <- fread(paste0(path_data_root, "10.c. Visualizing drought coherence/10.c. drght_list.csv"),
-                      select = c("ADMIN_GROUPING", "CLUSTER", "YEAR", "KEEP_VISUAL_INSPECTION"))
-  # <START><Modified step>
-  setnames(drght_list, c("YEAR", "ADMIN_GROUPING"), c("Year", "Continent"))
-  thesis_clusters <- copy(treedrought::std_drought_clus)
-  thesis_clusters <- thesis_clusters[,Id := NULL] |> unique()
-  drght_list <- drght_list |> merge(thesis_clusters,
-                                    all.x = TRUE,
-                                    by = c("Continent", "CLUSTER"))
-  cols_char <- c("CLUSTER2", "CLUSTER3")
-  drght_list[, (cols_char) := lapply(.SD, as.character), .SDcols = cols_char]
-  data_with_drought_years[, (cols_char) := lapply(.SD, as.character), .SDcols = cols_char]
-  data_with_drought_years <- merge(data_with_drought_years, drght_list, all.x = TRUE, by = c("Continent", "name", "CLUSTER2", "CLUSTER3",  "Year"))
-
-  # drght_list[,group_col := paste0(ADMIN_GROUPING, "_", CLUSTER)]
-  # drght_list[, `:=` (ADMIN_GROUPING = NULL,
-  #                    CLUSTER = NULL)]
-  # data_with_drought_years <- merge(data_with_drought_years, drght_list, by.x = c("group_col", "Year"), by.y = c("group_col", "YEAR"), all.x = TRUE)
-  # <END><Modified step>
-
-  # Quick check to make sure all was included
-  data_with_drought_years$KEEP_VISUAL_INSPECTION |> is.na() |> sum()
-  data_with_drought_years[is.na(KEEP_VISUAL_INSPECTION)]
-  # Great only the unclassified groups
-  data_with_drought_years <- data_with_drought_years[KEEP_VISUAL_INSPECTION == TRUE]
-  data_with_drought_years # Should have 188 droughts and match "d" line #37 of script 11. Preparing expanded...
-  # <MANUAL THESIS STEPS> <END>
-
   # Ensure grouping variables are character
   data_with_drought_years[, (group_col) := lapply(.SD, as.character), .SDcols = group_col]
   data_with_drought_events[, (group_col) := lapply(.SD, as.character), .SDcols = group_col]
