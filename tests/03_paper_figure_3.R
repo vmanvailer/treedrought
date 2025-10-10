@@ -7,7 +7,7 @@ ahm_mean <- readRDS("tests/ahm_mean.rds")
 
 # --- Plot - Correlation --------------------
 
-std_proj_recov_f[,Continent := tstrsplit(group_col, "_", )[1]]  |> # Create continent variable
+std_proj_recov_f  |> # Create continent variable
   merge(ahm_mean) |>                                               # Add mean AHM
   ggplot(aes(x = ResistanceMean, y = RED50Mean)) +
 
