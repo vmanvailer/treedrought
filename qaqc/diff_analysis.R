@@ -1,4 +1,6 @@
 library(data.table)
+library(targets)
+qaqc_summary <- tar_read(qaqc_summary)
 old_red_50 <- qaqc_summary$old_filtered[,c("FILE_CODE", "GRWRED50_MEAN")] |> dplyr::arrange(FILE_CODE) |> setDT() |> setnames(c("FILE_CODE", "GRWRED50_MEAN"), c("Id", "Red50"))
 new_red_50 <- qaqc_summary$new_filtered[,.(Id, Red50 = as.numeric(ProjGrowthReduction50Mean))] |> data.table::setorder("Id")
 merged_red50 <- merge(old_red_50, new_red_50, by = "Id", suffixes = c("_old", "_new"), all = TRUE)
