@@ -1,0 +1,121 @@
+## **TreeDrought – Thesis Branch**
+
+### Purpose
+This branch reproduces the **official thesis workflow** using the updated package-based logic from TreeDrought.  
+It includes all the necessary **manual adjustments and visual validation steps** that were originally performed during the thesis analyses to ensure full reproducibility of the publication results.
+
+This version is designed to **replicate the published figures and tables**, maintaining manual filtering and data selection logic that were specific to the thesis dataset.
+
+---
+
+### Overview
+
+This branch bridges the gap between the original thesis scripts and the clean, standardized package code.  
+It preserves:
+- The same **analytical sequence** as the final thesis version.
+- All **temporary and manual filters** used during visual inspection and data curation.
+- The **same numerical outputs and figure-ready objects**.
+
+Each of these steps has been **explicitly annotated** in the source functions under the `R/` directory (see section *Manual Thesis Adjustments* below).
+
+---
+
+### Example Demo
+Below is a minimal example demonstrating how to install and reproduce the full thesis workflow using this branch.
+
+```r
+# --- Setup --------------------------------------------------------------------
+devtools::install_github("vmanvailer/treedrought",
+                         ref = "thesis",
+                         auth_token = "[YOUR_READ_ONLY_TOKEN]")
+library(treedrought)
+
+# -----------------------------------------------------------------------------=
+# --- Data ---------------------------------------------------------------------
+# -----------------------------------------------------------------------------=
+
+# Thesis input data
+data(
+  std_drought_chro,  # Chronology data
+  std_drought_clim,  # Climate data
+  std_drought_clus   # Chronology clustering
+)
+
+# Sample run (~7-10 min)
+sample_run <- std_drought_clus[CLUSTER3 %in% c(12, 6, 3, 11) &
+                               CLUSTER3_STATUS == "Included"]
+
+std_drought_chro <- std_drought_chro[Id %in% sample_run$Id] |> merge(std_drought_clus)
+std_drought_clim <- std_drought_clim[Id %in% sample_run$Id]
+
+# =============================================================================-
+# === RED50 Calculation ========================================================
+# =============================================================================-
+
+std_results <- std_drought_impact(
+  chron_data = std_drought_chro,
+  chron_group_col = c("Continent", "name", "CLUSTER2", "CLUSTER3"),
+  clim_data = std_drought_clim
+)
+
+if(!dir.exists("tests")) dir.create("tests")
+saveRDS(std_results, "tests/std_results.rds")
+```
+
+This run reproduces the same RED50 values and intermediate tables used in the publication.
+It can be compared against the thesis figures for verification.
+
+---
+
+### Manual Thesis Adjustments
+Below are the manual or temporary modifications preserved in this branch to ensure exact reproducibility of the thesis outputs.
+
+#### `R/00_prep_climate_data.R`
+- **Disabled year completeness filter:** New workflow include this safeguard to guarantee ends of temporal series are the same during average.
+- **Restricted time period:** Filtered to 1970–2017 before SPEI calculation. This period was chosen as our average climate to derive anomalies from.
+- **Limited rescaling range:** Re-scaling differed slightly (1971–2005) for SPEI normalization. This ensure exact match of procedures.
+
+#### `R/02_identify_pointer_years.R`
+- **Temporary threshold override:** applied a stricter `-2 SD` threshold for flagging droughts from delayed growth response.
+- **QAQC bypass:** minimum drought event count filter (`.N >= 3`) temporarily disabled. No impact to analysis as they are filter at a later stage.
+
+#### `R/03_prepare_dataset_for_drought_indices_calculations.R`
+- **Removed post-2003 droughts:** aligned with thesis filtering for visual consistency.
+- **Manual removal based on visual inspection:** joined external validation table `10.c. drght_list.csv` and filtered to `KEEP_VISUAL_INSPECTION == TRUE`.
+- **Ensured drought-year consistency:** validated count and classification alignment to the thesis dataset.
+
+#### `R/05b_model_resilience_indices.R`
+- **Removed recovery > 100:** filtered out unrealistic recovery values to avoid convergence issues in nonlinear fitting.
+
+Each of these steps is marked with log messages (`TEMPORARY STEP:`) in the source files for transparency.
+On the new workflow these steps are not required and were simply included here to guarantee near-perfect match between results.
+User may also choose to implement them based on their needs as this packages provides flexibility with intermediate results.
+
+---
+
+### Outputs
+- **`std_results`**: contains complete model outputs and derived metrics (RED50, resistance, recovery, resilience).
+- **Intermediate `.rds` files** are generated for transparency and validation.
+- **Plots** can be generated by re-running thesis figure scripts with these outputs.
+
+---
+
+### 📁 Repository Structure
+```
+thesis/
+├── R/                              # Thesis-specific modified package functions
+├── data-raw/                       # Original data preparation logic
+├── inst/extdata/                   # Thesis datasets packaged for reproducibility
+├── scripts/                        # Supporting thesis workflow code
+├── tests/                          # Example outputs and verification results
+└── README.md                       # This document
+```
+
+---
+
+### Summary
+- Fully reproduces published thesis results using the TreeDrought package framework.
+- Includes embedded manual and visual inspection logic for historical accuracy.
+- Provides direct comparison capabilities with the clean `main` branch.
+- Serves as a validated bridge between (tidyverse) and (`data.table`) workflows.
+
