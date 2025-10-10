@@ -16,7 +16,7 @@ load_thesis_data <- function(tree_ring_data_source = c("Detrended", "Detrended i
       stop("Pick which tree ring data to start with. 'Dentrended' or 'Detrended imputed'.")
   }
   if(tolower(tree_ring_data_source) == "detrended imputed"){
-    message("Reading imputed tree ring dataset from CSV file.")
+    if (verbose) log_message("Reading imputed tree ring dataset from CSV file.")
     path_chron_itrdb <- file.path(path_data_root, "02. Imputing chronologies ends", "02. crn_filter_imputed.csv")
     chron_itrdb_csv <- fread(path_chron_itrdb)
     chron_itrdb_csv <- data.table::melt(chron_itrdb_csv, id.vars = "FILE_CODE", measure.vars = 2:71)

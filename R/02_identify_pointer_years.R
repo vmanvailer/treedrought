@@ -225,7 +225,7 @@ identify_drought_years <- function(data_with_drought_events,
   # Remove drought years that have less than three records
   # In order to fit a negative exponential model, must have at least three records
   message("-=-=-=-=-=-=-=-= : : : : TEMPORARYLY DEACTIVATED STEP: To allow QAQC of drought events moving forward. : : : : =-=-=-=-=-=-=-=-=-")
-  # drought_years <- drought_years[, .SD[.N >= 3] , by = c(mget(group_col))]
+  # drought_years <- drought_years[, .SD[.N >= 3] , by = group_col]
 
   report <- drought_years[,.(NDrought = .N), keyby = group_col]
   if (verbose) log_message("Below is the summary of droughts per group:\n\n\t")

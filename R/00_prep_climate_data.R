@@ -42,8 +42,7 @@ calc_clim_drought_period <- function(clim_data,
                                      Year + fifelse(Month > growth_end["SH"], 1, 0) -1)]
 
   message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Disabling year filter that keeps only the ones w/ 12 mo of data : : : : =-=-=-=-=-=-=-=-=-")
-  # message("Removing drought years with less than 12 months of data.")
-  # # Remove data that does not have 12 months of records
+  # if (verbose) log_message("Removing drought years with less than 12 months of data.")
   # climate_data <- climate_data[, if (.N == 12) .SD, by = .(Id, DroughtYear)]
 
   message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Filtering climate data to >= 1970 and <= 2017 before SPEI calculation : : : : =-=-=-=-=-=-=-=-=-")
