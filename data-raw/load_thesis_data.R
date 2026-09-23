@@ -1,6 +1,6 @@
-load_thesis_data <- function(tree_ring_data_source = c("Detrended", "Detrended imputed")){
+load_thesis_data <- function(tree_ring_data_source = c("Detrended", "Detrended imputed", "Unfiltered")){
   library(data.table)
-  path_data_root <- "H:/My Drive/Work/1_PhD/2_Chapter 4 - Drought analysis"
+  path_data_root <- "G:/My Drive/Work/1_PhD/2_Chapter 4 - Drought analysis"
   # --- Climate -------------------------------------
   path_climate_udel <- file.path(path_data_root, "03. Filtering climate data", "03. UDEL_filter4.Rds")
   path_chron_metadata <- file.path(path_data_root, "00. Base files", "Tree Rings", "3_Metadata_for_raw_and_chronology_data_files.csv")
@@ -14,7 +14,7 @@ load_thesis_data <- function(tree_ring_data_source = c("Detrended", "Detrended i
 
   # --- Tree ring -----------------------------------
   if(length(tree_ring_data_source) != 1){
-      stop("Pick which tree ring data to start with. 'Dentrended' or 'Detrended imputed'.")
+      stop("Pick which tree ring data to start with. 'Dentrended', 'Detrended imputed' or 'Unfiltered'.")
   }
   if(tolower(tree_ring_data_source) == "detrended imputed"){
     message("Reading imputed tree ring dataset from CSV file.")
@@ -25,12 +25,29 @@ load_thesis_data <- function(tree_ring_data_source = c("Detrended", "Detrended i
     chron_itrdb_csv[, variable := NULL]
     chron_itrdb_dt <- data.table::dcast(data = chron_itrdb_csv, formula = FILE_CODE+Year~Variable)
     data.table::setnames(chron_itrdb_dt, "FILE_CODE", "Id")
+    setDT(chron_itrdb_dt)
 
-  } else if (length(tree_ring_data_source) == 1 & tolower(tree_ring_data_source == "detrended")){
+  } else if (length(tree_ring_data_source) == 1 & tolower(tree_ring_data_source) == "detrended"){
     path_chron_itrdb <- file.path(path_data_root, "01. Filtering tree ring sites", "01. crn_filter.rds")
     chron_itrdb_rds <- readr::read_rds(path_chron_itrdb)
     chron_itrdb_dt <- data.table::rbindlist(chron_itrdb_rds, idcol = "Id")
     data.table::setnames(chron_itrdb_dt, old = c("YEAR"), new = c("Year"))
+    setDT(chron_itrdb_dt)
+
+  } else if (length(tree_ring_data_source) == 1 & tolower(tree_ring_data_source) == "unfiltered") {
+    path_chron_itrdb <- file.path(path_data_root, "00. Base files", "Tree Rings", "chr_friedm_all_AR_MH.Rds")
+    chron_itrdb_rds <- read_rds(path_chron_itrdb)
+    chron_itrdb_dt <- data.table::rbindlist(
+      lapply(chron_itrdb_rds,
+         function(x) {
+           x$Year <- rownames(x)
+           data.table::setnames(x, c("std", "res", "samp.depth"), c("RWI", "RES", "SampleDepth"))
+           return(x)
+          }
+        ), idcol = "Id" 
+      )
+    data.table::setcolorder(chron_itrdb_dt, c("Id", "Year", "RES", "RWI", "SampleDepth"))
+    chron_itrdb_dt[,Year := as.numeric(Year)]
     setDT(chron_itrdb_dt)
   }
 
@@ -40,13 +57,13 @@ load_thesis_data <- function(tree_ring_data_source = c("Detrended", "Detrended i
   thesis_clusters_b <- fread(file = file.path(path_data_root, "18. Renumber clusters - Visualizing admin grouping world/color_cluster3df_named.csv"))
   thesis_clusters <- thesis_clusters_a[thesis_clusters_b, on = "CLUSTER2"]
   thesis_clusters <- merge(thesis_group_admin, thesis_clusters, by = "FILE_CODE", all.x = TRUE)
-  data.table::setnames(thesis_clusters, old = c("FILE_CODE"), new = c("Id"))
   thesis_clusters[,group_col := paste(ADMIN_GROUPING, CLUSTER2, sep = "_")]
-  thesis_clusters[,`:=` (ADMIN_GROUPING = NULL,
-                         CLUSTER = NULL)]
+  thesis_clusters[,`:=` (CLUSTER = NULL)]
+  data.table::setnames(thesis_clusters, old = c("FILE_CODE", "ADMIN_GROUPING"), new = c("Id", "Continent"))
+  setcolorder(thesis_clusters, c("Id", "Continent", "name", "group_col", "CLUSTER2", "CLUSTER3", "CLUSTER3_STATUS", "COLOR"))
 
   # --- Chronology Metadata -------------------------
-  chron_itrdb_meta <- fread(file.path(path_data_root, "00. Base files/Tree Rings/3_Metadata_for_raw_and_chronology_data_files.csv"))
+  chron_itrdb_meta <- fread(file.path(path_data_root, "00. Base files/Tree Rings/3_Metadata_for_raw_and_chronology_data_files.csv"), encoding = "Latin-1")
   setnames(chron_itrdb_meta, old = c("FILE_CODE"), new = c("Id"))
 
   # --- Sensitivity analysis data -------------------

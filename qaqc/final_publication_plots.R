@@ -1,3 +1,8 @@
+path_data_root <- "G:/My Drive/Work/1_PhD/2_Chapter 4 - Drought analysis"
+nls_m1e2 <- readRDS(file.path(path_data_root, "14. Project growth at 0.5 resist/14. nls_e2_FILE_CODE_grw_red.Rds"))
+clusters_df <- read_csv(file.path(path_data_root, "09.a. Visualizing admin grouping world/09.a. clustering_res.csv"), col_types = "cff")
+color_cluster3df <- read_csv(file.path(path_data_root, "18. Renumber clusters - Visualizing admin grouping world/color_cluster3df.csv"), col_type = "fcfc")
+
 # Ordering =====================================================================
 
 order_ad <- nls_m1e2 %>%

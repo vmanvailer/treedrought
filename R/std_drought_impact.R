@@ -50,7 +50,7 @@
 #' # run full standardized drought impact pipeline
 #' result <- std_drought_impact(
 #'   chron_data            = my_ring_data,
-#'   chron_group_col       = c(\"ADMIN_GROUPING\",\"CLUSTER\"),
+#'   chron_group_col       = c(\\"ADMIN_GROUPING\\",\\"CLUSTER\\"),
 #'   clim_data             = my_climate_data
 #' )
 #' # view final projected recovery table

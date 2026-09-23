@@ -1,5 +1,6 @@
 source("data-raw/load_thesis_data.R")
 thesis_data <- load_thesis_data("Detrended imputed")
+chron_itrdb_dt_unfiltered <- load_thesis_data("Unfiltered")$chron_itrdb_dt
 
 path_climate_udel_dt <- "inst/extdata/climate_udel_dt.csv"
 if(!file.exists(path_climate_udel_dt)){
@@ -19,6 +20,14 @@ if(!file.exists(path_chronologies_itrdb_dt)){
   warning("Skipping writing choronology data. File already exists at:\n\t", path_chronologies_itrdb_dt)
 }
 
+path_chronologies_itrdb_dt_unfiltered <- "inst/extdata/chronologies_itrdb_dt_unfiltered.csv"
+if(!file.exists(path_chronologies_itrdb_dt_unfiltered)){
+  data.table::fwrite(chron_itrdb_dt_unfiltered, path_chronologies_itrdb_dt_unfiltered)
+  usethis::use_data(chron_itrdb_dt_unfiltered, overwrite = TRUE)
+} else {
+  warning("Skipping writing choronology data. File already exists at:\n\t", path_chronologies_itrdb_dt)
+}
+
 path_chronologies_itrdb_meta <- "inst/extdata/chronologies_itrdb_meta.csv"
 if(!file.exists(path_chronologies_itrdb_meta)){
   chron_itrdb_meta <- thesis_data$chron_itrdb_meta
@@ -34,7 +43,7 @@ if(!file.exists(path_clusters)){
   data.table::fwrite(thesis_data$thesis_clusters, path_clusters)
   usethis::use_data(clusters, overwrite = TRUE)
 } else {
-  warning("Skipping writing clsutering data. File already exists at:\n\t", path_clusters)
+  warning("Skipping writing clustering data. File already exists at:\n\t", path_clusters)
 }
 
 path_sensitivity_filter <- "inst/extdata/sensitivity_filter.csv"

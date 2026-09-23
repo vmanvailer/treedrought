@@ -31,6 +31,22 @@
 "chron_itrdb_dt"
 
 
+#' Chronology data (ITRDB)
+#'
+#' Detrended tree-ring chronologies for drought resilience analysis before temporal filtering.
+#'
+#' @format A data frame with columns:
+#' \describe{
+#'   \item{Id}{Unique site identifier.}
+#'   \item{Year}{Calendar year.}
+#'   \item{RES}{Standardized residual index.}
+#'   \item{RWI}{Ring-width index.}
+#'   \item{SampleDepth}{Number of samples (cores or radial measurements)}
+#' }
+#' @source Derived from ITRDB data using \code{load_thesis_data()}.
+"chron_itrdb_dt_unfiltered"
+
+
 #' Cluster grouping data
 #'
 #' Group identifiers for each chronology site, used to set \code{chron_group_col}.

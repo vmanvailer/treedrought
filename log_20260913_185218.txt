@@ -1,0 +1,30 @@
+2026-09-13 19:02:36	INFO	Adjusting climate data. 
+2026-09-13 19:02:36	INFO	Calculating hemisphere drought year. 
+2026-09-13 19:02:37	INFO	Computing PET and Water balance (Precipitation - PET) 
+2026-09-13 19:02:38	INFO	Calculating SPEI using SPEI:spei() with scale parameter set to 1 
+2026-09-13 19:02:43	INFO	Replacing infinite values in SPEI by NAs. 
+2026-09-13 19:02:43	INFO	Computing rolling mean for SPEI and TAve and rolling sum for Prec for growth period: 12 
+2026-09-13 19:02:50	INFO	'rescale_spei = TRUE'. Mean SPEI will be rescaled for the user provided time span. This is what we will use for threhsold drought detection. 
+2026-09-13 19:02:50	INFO	Combining chronology and climate datasets for detection of drought events. 
+2026-09-13 19:02:50	INFO	Merge Report:
+ 
+2026-09-13 19:02:50	INFO	  Number of Ids with missing climate data: 0
+ 
+2026-09-13 19:02:50	INFO	  Number of Ids with missing chronology data: 1723
+ 
+2026-09-13 19:02:50	INFO	Detecting drought events. Drought defined as:
+	Growth decrease <= -1 SD
+	SPEI decrease <= -1 SD
+
+	and
+
+	Growth decrease <= -2 SD over two years
+	SPEI decrease <= -1.5 SD 
+2026-09-13 19:02:50	INFO	Residual column provided ('RES'). Using it for drought dectection.
+                    		To use 'RWI' instead simply remove 'RES' 
+2026-09-13 19:02:50	INFO	Defining drought years across 'chron_group_col'. 
+2026-09-13 19:02:50	INFO	Below is the summary of droughts per group:
+
+	 
+2026-09-13 19:02:50	INFO	IN DEVELOPMENT: Future versions will include details of removed droughts on the report and the reason for removal it. 
+2026-09-13 19:02:50	INFO	Preparing data for resilience index calculations. 

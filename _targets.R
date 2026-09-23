@@ -11,7 +11,7 @@ tar_option_set(
 )
 
 # --- Load input data & functions ---
-source("C:/Vini/Github_projects/treedrought/data-raw/load_data_from_thesis.R")
+source("C:/Github_projects/treedrought/data-raw/load_thesis_data.R")
 
 # Old pipeline wrappers
 source("qaqc/old_pipeline/04. Calculating hemisphere drought years_target.R")

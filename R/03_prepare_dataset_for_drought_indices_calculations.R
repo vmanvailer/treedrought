@@ -18,7 +18,6 @@ prepare_resilience_dataset <- function(data_with_drought_events,
                                        n_years_baseline = 2,
                                        n_years_recovery = 2){
   setDT(data_with_drought_years)
-
   # <MANUAL THESIS STEPS> <START>
   message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Removing drought years from 2003+. Excluded 2003 specifically by mistake ref qaqc-04: : : : =-=-=-=-=-=-=-=-=-")
   data_with_drought_years <- data_with_drought_years[Year < 2003]
@@ -27,13 +26,24 @@ prepare_resilience_dataset <- function(data_with_drought_events,
   # <MANUAL THESIS STEPS> <START>
   # 1 - Removal of drought events from visually inspecting them.
   message("-=-=-=-=-=-=-=-= : : : : TEMPORARY STEP: Removing inconsistent droughts from visual inspections : : : : =-=-=-=-=-=-=-=-=-")
-  path_data_root <- "H:/My Drive/Work/1_PhD/2_Chapter 4 - Drought analysis/"
+  # Need cluster information to maintain 'group_col' logic
+  path_data_root <- "G:/My Drive/Work/1_PhD/2_Chapter 4 - Drought analysis/"
+  thesis_group_admin <- fread(file.path(path_data_root, "09. Clustering admin groupings/09. clusters_df_res.csv"), select = c("FILE_CODE", "ADMIN_GROUPING"))
+  thesis_clusters_a <- fread(file = file.path(path_data_root, "09.a. Visualizing admin grouping world/09.a. clustering_res.csv"))
+  thesis_clusters_b <- fread(file = file.path(path_data_root, "18. Renumber clusters - Visualizing admin grouping world/color_cluster3df_named.csv"))
+  thesis_clusters <- thesis_group_admin[thesis_clusters_a, on = "FILE_CODE"] 
+  thesis_clusters <- thesis_clusters[thesis_clusters_b, on = "CLUSTER2"]
+  adm_thesis_clusters <- thesis_clusters[,.(ADMIN_GROUPING, CLUSTER, CLUSTER2, CLUSTER3)] |> unique()
+
   drght_list <- fread(paste0(path_data_root, "10.c. Visualizing drought coherence/10.c. drght_list.csv"),
                       select = c("ADMIN_GROUPING", "CLUSTER", "YEAR", "KEEP_VISUAL_INSPECTION"))
-  drght_list[,group_col := paste0(ADMIN_GROUPING, "_", CLUSTER)]
+  drght_list <- drght_list[adm_thesis_clusters, on = c("ADMIN_GROUPING","CLUSTER")]
+  drght_list[,group_col := paste0(ADMIN_GROUPING, "_", CLUSTER2)]
   drght_list[, `:=` (ADMIN_GROUPING = NULL,
                      CLUSTER = NULL)]
-  data_with_drought_years <- merge(data_with_drought_years, drght_list, by.x = c("group_col", "Year"), by.y = c("group_col", "YEAR"), all.x = TRUE)
+  data_with_drought_years <- merge(data_with_drought_years, drght_list, 
+                                   by.x = c("Year", "group_col", "CLUSTER2", "CLUSTER3"),
+                                   by.y = c("YEAR", "group_col", "CLUSTER2", "CLUSTER3"), all.x = TRUE)
   # Quick check to make sure all was included
   data_with_drought_years$KEEP_VISUAL_INSPECTION |> is.na() |> sum()
   data_with_drought_years[is.na(KEEP_VISUAL_INSPECTION)]

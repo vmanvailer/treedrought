@@ -1,0 +1,50 @@
+Continent,CLUSTER3,Species,NumberOfSites,MeanDroughtsPerSite,RED50Mean,RED50SE,AvgResistance,AvgResilience
+North America,7,Quercus douglasii,32,6,0.34,0.38,0.79,1.10
+North America,14,Picea glauca,27,4,0.12,0.22,0.84,0.98
+North America,12,Tsuga mertensiana,20,3,0.04,0.21,0.93,1.11
+North America,11,Quercus prinus,8,3,0.03,0.22,0.89,0.97
+North America,13,Pseudotsuga menziesii,37,6,0.03,0.74,0.89,1.04
+North America,11,Chamaecyparis thyoides,22,3,-0.05,0.20,0.91,1.02
+North America,7,Pinus ponderosa,7,6,-0.07,0.13,0.87,1.06
+North America,6,Pinus edulis,35,8,-0.07,0.08,0.68,0.98
+North America,3,Quercus alba,12,5,-0.09,0.14,0.88,1.01
+North America,13,Pinus flexilis,10,6,-0.11,0.11,0.86,1.05
+North America,3,Liriodendron tulipifera,12,5,-0.11,0.18,0.84,0.99
+North America,6,Pseudotsuga menziesii,29,8,-0.11,0.08,0.70,0.94
+North America,3,Quercus spp,7,5,-0.12,0.14,0.91,0.98
+North America,5,Quercus stellata,6,6,-0.14,0.18,0.99,0.99
+North America,6,Pinus ponderosa,15,8,-0.14,0.09,0.76,0.97
+North America,10,Taxodium mucronatum,12,5,-0.15,0.13,0.86,1.03
+North America,12,Abies lasiocarpa,10,3,-0.15,0.16,0.95,1.03
+North America,4,Pseudotsuga menziesii,35,6,-0.15,0.09,0.56,0.91
+North America,5,Pseudotsuga menziesii,27,6,-0.16,0.10,0.74,0.94
+North America,12,Pseudotsuga menziesii,11,3,-0.17,0.09,0.89,0.94
+North America,11,Quercus rubra,6,3,-0.17,0.09,0.78,0.97
+North America,10,Pseudotsuga menziesii,9,5,-0.17,0.12,0.77,1.05
+North America,1,Picea glauca,35,3,-0.18,0.11,0.91,1.06
+North America,11,Tsuga canadensis,14,3,-0.18,0.09,0.97,1.02
+North America,4,Pinus ponderosa,25,6,-0.18,0.13,0.56,0.93
+North America,8,Pinus ponderosa,13,5,-0.22,0.15,0.84,0.95
+North America,8,Pseudotsuga menziesii,35,5,-0.24,0.12,0.84,0.93
+North America,9,Quercus macrocarpa,13,4,-0.26,0.10,0.86,0.95
+North America,8,Pinus flexilis,11,5,-0.29,0.13,0.90,0.95
+North America,11,Quercus alba,13,3,-0.30,0.12,0.85,0.97
+North America,2,Abies lasiocarpa,20,3,-0.31,0.09,0.95,1.00
+North America,9,Pinus resinosa,11,4,-0.36,0.13,0.89,0.93
+North America,9,Pinus strobus,14,4,-0.50,0.11,0.99,1.02
+Europe,16,Larix decidua,10,6,-0.08,0.08,0.70,0.99
+Europe,17,Fagus sylvatica,26,5,-0.09,0.07,0.78,0.97
+Europe,15,Pinus heldreichii,11,3,-0.14,0.05,0.87,0.94
+Europe,17,Picea abies,24,5,-0.18,0.14,0.88,1.01
+Europe,17,Pinus sylvestris,7,5,-0.25,0.19,1.00,1.03
+Europe,18,Quercus spp,10,4,-0.30,0.14,0.90,1.03
+Europe,19,Pinus sylvestris,20,3,-0.31,0.10,0.89,0.94
+Europe,17,Quercus petraea,19,5,-0.36,0.09,1.01,1.10
+Europe,17,Quercus robur,9,5,-0.44,0.08,0.96,1.08
+Asia,22,Juniperus przewalskii,12,3,0.16,0.10,0.68,0.99
+Asia,21,Juniperus tibetica,7,4,0.00,0.11,0.88,1.10
+Asia,20,Picea schrenkiana,14,4,-0.14,0.14,0.83,0.94
+Asia,23,Larix sibirica,16,4,-0.20,0.17,0.86,0.97
+Asia,21,Abies forestii,8,4,-0.35,0.11,0.91,0.98
+South America,25,Nothofagus pumilio,14,3,-0.18,0.21,0.89,0.96
+South America,24,Nothofagus pumilio,6,4,-0.22,0.14,0.93,1.06
